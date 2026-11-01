@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'screens/homepage.dart';
 import 'screens/impacto.dart';
@@ -9,6 +11,7 @@ import 'screens/receitas.dart';
 import 'screens/admin.dart';
 
 void main() {
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
   runApp(const MyApp());
 }
 
@@ -18,8 +21,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Frigorífico',
-      // tema global, em theme/app_theme.dart
+      title: 'Frigu',
+      // tema global, vem de theme/app_theme.dart
       theme: appTheme,
       home: const HomeShell(),
     );
@@ -29,14 +32,14 @@ class MyApp extends StatelessWidget {
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
-  // _ = privado a este ficheiro
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
+// _ = privado a este ficheiro
 class _HomeShellState extends State<HomeShell> {
   int _indice = 0;
-  //so o homeShellState precisa de aceder ao _ecras
+
   final List<Widget> _ecras = const [
     Homepage(),
     Inventario(),
@@ -48,23 +51,18 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Frigu'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Admin()),
-              );
-            },
-          ),
-        ],
-      ),
-      // IndexedStack mantém os ecrãs vivos ao trocar de separador
+      // botao flutuante, so no Inicio
+      floatingActionButton: _indice == 0
+          ? FloatingActionButton.extended(
+              onPressed: () => debugPrint('adicionar'),
+              backgroundColor: AppColors.primary500,
+              foregroundColor: AppColors.white,
+              icon: const Icon(Icons.photo_camera),
+              label: const Text('Adicionar'),
+            )
+          : null,
+      // mostra so o ecra do _indice e os outros nao perdem o estado
       body: IndexedStack(index: _indice, children: _ecras),
-      // o separador tocado muda o _indice e o ecrã visível
       bottomNavigationBar: NavigationBar(
         selectedIndex: _indice,
         onDestinationSelected: (i) {
@@ -72,22 +70,19 @@ class _HomeShellState extends State<HomeShell> {
             _indice = i;
           });
         },
-        // mesma ordem que _ecras
+        // tem de estar pela mesma ordem que _ecras
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Início'), // 0
-          NavigationDestination(
-            icon: Icon(Icons.kitchen),
-            label: 'Inventário',
-          ), // 1
+          NavigationDestination(icon: Icon(Icons.home), label: 'Início'),
+          NavigationDestination(icon: Icon(Icons.kitchen), label: 'Inventário'),
           NavigationDestination(
             icon: Icon(Icons.restaurant_menu),
             label: 'Receitas',
-          ), // 2
-          NavigationDestination(icon: Icon(Icons.eco), label: 'Impacto'), // 3
+          ),
+          NavigationDestination(icon: Icon(Icons.eco), label: 'Impacto'),
           NavigationDestination(
             icon: Icon(Icons.shopping_cart),
             label: 'Compras',
-          ), // 4
+          ),
         ],
       ),
     );

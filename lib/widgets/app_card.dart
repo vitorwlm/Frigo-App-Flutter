@@ -1,21 +1,39 @@
 import 'package:flutter/material.dart';
 
-class AppCard extends StatelessWidget {
-  const AppCard({super.key, required this.child, this.onTap});
+import '../theme/app_colors.dart';
 
-  final Widget child; //para poder controlar posicoes internas a vontade
-  // opcional: sem onTap o cartão não é clicável
+class AppCard extends StatelessWidget {
+  const AppCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.onTap,
+    this.color,
+    this.borderColor,
+  });
+
+  final Widget child;
+  // ? = pode ser null; sem onTap o cartao nao reage ao toque
   final VoidCallback? onTap;
+  final EdgeInsets padding;
+  final Color? color;
+  final Color? borderColor;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      // o efeito do toque não sai dos cantos
+      color: color,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        // ?? = se borderColor for null usa o gray200
+        side: BorderSide(color: borderColor ?? AppColors.gray200),
+      ),
+      // corta o efeito de toque nos cantos arredondados
       clipBehavior: Clip.antiAlias,
-      // InkWell: área clicável com o efeito de toque do Material
+      // InkWell torna o cartao clicavel com o efeito de toque
       child: InkWell(
         onTap: onTap,
-        child: Padding(padding: const EdgeInsets.all(16), child: child),
+        child: Padding(padding: padding, child: child),
       ),
     );
   }

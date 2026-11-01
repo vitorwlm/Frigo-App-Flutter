@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-// Paleta do Figma (100 = mais claro, 900 = mais escuro).
-// static: usa-se AppColors.primary500 sem criar um objeto.
+// static: usa-se AppColors.primary500 sem criar um objeto
+// Color(0xFF...) = FF opaco + hex do Figma
 class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
