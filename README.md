@@ -1,63 +1,57 @@
-# Frigu — Frigorífico Inteligente
+# Frigu
 
-**Frigu** é uma app Android, feita em Flutter, ligada a um mini frigorífico inteligente. O frigorífico tem uma câmara e sensores e sabe sempre o que está lá dentro e em que condições. A app mostra o inventário, avisa antes de os alimentos passarem de validade e sugere receitas com o que já existe. O objetivo é deitar menos comida fora.
+App Android em Flutter para um mini frigorífico inteligente, feita no âmbito do Projeto Interdisciplinar 2 (PI2) do CTeSP em Design e Tecnologias para Aplicações Móveis, na ESMAD (P.Porto), em 2026/2027.
 
-## O problema
+Estado: em desenvolvimento. A entrega final é em janeiro de 2027.
 
-Uma parte importante da comida comprada acaba no lixo, muitas vezes porque fica esquecida no fundo do frigorífico até passar de validade. É difícil saber o que há em casa quando se está no supermercado, e quase ninguém regista as validades.
+## Sobre o projeto
 
-## A solução
+Muita comida vai para o lixo porque fica esquecida no frigorífico até passar de validade. A ideia do Frigu é o frigorífico saber o que tem lá dentro e avisar a tempo.
 
-| | |
-|---|---|
-| 📷 **Inventário automático** | Quando a porta fecha, a câmara tira uma foto. Um modelo de visão (Gemini) reconhece os alimentos e atualiza o inventário sozinho. |
-| ⏰ **Alertas de validade** | Avisa 2 dias antes de um alimento expirar. |
-| 🍳 **Receitas** | Sugere receitas com o que já está no frigorífico, dando prioridade ao que expira primeiro. |
-| 🌡️ **Monitorização** | Temperatura e humidade em tempo real, com gráficos e alertas de porta aberta ou temperatura alta. |
-| 🌱 **Impacto** | Mostra o desperdício evitado ao longo do tempo. |
-| 🛒 **Lista de compras** | Feita a partir do que falta, para não comprar a mais. |
+O frigorífico tem uma câmara que tira uma foto sempre que a porta fecha. A foto é analisada pelo Gemini, que identifica os alimentos e atualiza o inventário. Com isso, a app consegue:
+
+- mostrar o que está no frigorífico e as validades
+- avisar 2 dias antes de um alimento expirar
+- sugerir receitas com o que já existe, começando pelo que expira primeiro
+- mostrar a temperatura e a humidade, e avisar se a porta ficar aberta ou a temperatura subir
+- mostrar quanto desperdício foi evitado
+- fazer a lista de compras a partir do que falta
+
+O projeto está ligado ao ODS 12 (Produção e consumo sustentáveis), mais concretamente à meta 12.3, que é reduzir o desperdício alimentar.
 
 ## Como funciona
 
 ```mermaid
 flowchart LR
-    A[Mini frigorífico<br/>ESP32-S3 + câmara<br/>sensor de temperatura e humidade] -- leituras e fotos --> B[(Supabase<br/>base de dados e API)]
-    B -- foto --> C[Gemini<br/>reconhece os alimentos]
-    C -- inventário --> B
-    B <--> D[App Frigu<br/>Flutter]
+    A[Mini frigorífico<br/>ESP32-S3 + câmara + sensor] -- leituras e fotos --> B[(Supabase)]
+    B -- foto --> C[Gemini]
+    C -- alimentos --> B
+    B <--> D[App Frigu]
 ```
 
-O protótipo é um mini frigorífico impresso em 3D, arrefecido com gelo e controlado por uma ESP32-S3 com câmara. A placa envia as leituras dos sensores e as fotos para o Supabase. A app lê os mesmos dados para mostrar tudo ao utilizador.
+O protótipo é um mini frigorífico impresso em 3D, arrefecido com gelo e controlado por uma ESP32-S3 com câmara e um sensor de temperatura e humidade. A placa envia as leituras e as fotos para o Supabase, e a app lê os dados a partir daí.
 
-## Contexto académico
+## Ecrãs
 
-Projeto Interdisciplinar 2 (PI2) do CTeSP em Design e Tecnologias para Aplicações Móveis — ESMAD, Politécnico do Porto, 2026/2027.
-
-Alinhado com o **ODS 12 — Produção e consumo sustentáveis**, em particular a meta **12.3**: reduzir para metade o desperdício alimentar por pessoa.
-
-> 🚧 Em desenvolvimento. Entrega final: janeiro de 2027.
-
-## Estado dos ecrãs
-
-| Ecrã | Descrição | Estado |
+| Ecrã | O que mostra | Estado |
 |---|---|---|
 | Início | Estado do frigorífico, gráfico de temperatura e receita do dia | Em curso |
-| Inventário | Alimentos no frigorífico e respetivas validades | Planeado |
-| Receitas | Sugestões com os alimentos disponíveis | Planeado |
-| Impacto | Desperdício evitado | Planeado |
-| Compras | Lista de compras | Planeado |
-| Admin | Gestão de receitas e validades (só administradores) | Planeado |
+| Inventário | Alimentos e validades | Por fazer |
+| Receitas | Sugestões com os alimentos disponíveis | Por fazer |
+| Impacto | Desperdício evitado | Por fazer |
+| Compras | Lista de compras | Por fazer |
+| Admin | Gestão de receitas e validades (só administradores) | Por fazer |
 
 ## Tecnologias
 
-- [Flutter](https://flutter.dev) e Dart
-- Material 3 com tema próprio (paleta e tipografia do Figma, fonte Montserrat)
-- [fl_chart](https://pub.dev/packages/fl_chart) para gráficos
-- Planeado: Supabase (dados) e ESP32-S3 com câmara (hardware do frigorífico)
+- Flutter e Dart
+- Material 3, com cores e tipografia do nosso Figma (fonte Montserrat)
+- fl_chart para os gráficos
+- Mais tarde: Supabase para os dados e a ESP32-S3 do frigorífico
 
 ## Como correr
 
-Requisitos: [Flutter SDK](https://docs.flutter.dev/get-started/install) instalado (`flutter doctor` sem erros).
+É preciso ter o [Flutter](https://docs.flutter.dev/get-started/install) instalado.
 
 ```bash
 git clone https://github.com/vitorwlm/app.git
@@ -70,15 +64,15 @@ flutter run
 
 ```
 lib/
-├── main.dart        # arranque da app e barra de navegação
-├── screens/         # um ficheiro por ecrã
-├── theme/           # cores, tipografia e tema
-├── widgets/         # componentes reutilizáveis (cartões, botões)
-└── services/        # ligação a dados (em breve)
-assets/fonts/        # Montserrat
+├── main.dart     # arranque e barra de navegação
+├── screens/      # um ficheiro por ecrã
+├── theme/        # cores, letras e tema
+├── widgets/      # cartões e botões reutilizáveis
+└── services/     # ligação aos dados (ainda vazio)
+assets/fonts/     # Montserrat
 ```
 
 ## Equipa
 
-- Vítor — hardware, API, app e relatório
-- Nuno — UX, apoio ao hardware, app e relatório
+- Vítor: hardware, API, app e relatório
+- Nuno: UX, apoio ao hardware, app e relatório
