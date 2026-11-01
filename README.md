@@ -1,6 +1,6 @@
 # Frigu
 
-App Android em Flutter para um mini frigorífico inteligente, feita no âmbito do Projeto Interdisciplinar 2 (PI2) do CTeSP em Design e Tecnologias para Aplicações Móveis, na ESMAD (P.Porto), em 2026/2027.
+App Android em Flutter para um mini frigorífico inteligente, feita no âmbito do Projeto Interdisciplinar 2 (PI2) do CTeSP em Design e Tecnologias para Aplicações Móveis, na FMAD (P.Porto), em 2026/2027.
 
 Estado: em desenvolvimento. A entrega final é em janeiro de 2027.
 
