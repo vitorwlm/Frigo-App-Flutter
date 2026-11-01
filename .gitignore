@@ -46,3 +46,11 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Notas pessoais
+notas_flutter.md
+
+# Chaves e configurações locais (nunca enviar para o GitHub)
+.env
+*.env
+lib/config/secrets.dart
