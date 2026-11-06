@@ -18,14 +18,11 @@ List<Item> itensExemplo() => [
   Item(id: '6', nome: 'Leite meio-gordo', quantidade: 1, unidade: 'L', validade: _daqui(9), entrada: _daqui(-2), aberto: true, categoria: 'Laticínios', prateleira: 'Porta'),
   Item(id: '7', nome: 'Fiambre', quantidade: 150, unidade: 'g', validade: _daqui(5), entrada: _daqui(-2), categoria: 'Carne e peixe'),
   Item(id: '8', nome: 'Iogurte grego', quantidade: 1, unidade: 'unidades', validade: _daqui(12), entrada: _daqui(0), categoria: 'Laticínios', certeza: 54),
-  Item(id: '9', nome: 'Ervilhas', quantidade: 400, unidade: 'g', validade: _daqui(120), entrada: _daqui(-30), local: Local.arca, categoria: 'Legumes'),
-  Item(id: '10', nome: 'Peito de frango', quantidade: 500, unidade: 'g', validade: _daqui(60), entrada: _daqui(-20), local: Local.arca, categoria: 'Carne e peixe'),
-  Item(id: '11', nome: 'Pão', quantidade: 4, unidade: 'unidades', validade: _daqui(30), entrada: _daqui(-5), local: Local.arca, categoria: 'Outros'),
   Item(id: '12', nome: 'Manteiga', quantidade: 0, unidade: 'unidades', validade: _daqui(-3), entrada: _daqui(-40), local: Local.acabou, categoria: 'Laticínios'),
   Item(id: '13', nome: 'Tomates', quantidade: 0, unidade: 'unidades', validade: _daqui(-1), entrada: _daqui(-8), local: Local.acabou, categoria: 'Legumes'),
 ];
 
-List<Receita> receitasExemplo() => const [
+List<Receita> receitasExemplo() => [
   Receita(
     id: 'r1',
     titulo: 'Omelete de espinafres',

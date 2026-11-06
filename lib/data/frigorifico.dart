@@ -27,6 +27,33 @@ class Frigorifico extends ChangeNotifier {
   ];
   int _proximoId = 100;
 
+  Frigorifico() {
+    _sincronizarReceitas();
+  }
+
+  // sempre que algo muda, as receitas passam a saber o que há em casa
+  @override
+  void notifyListeners() {
+    _sincronizarReceitas();
+    super.notifyListeners();
+  }
+
+  // copia do inventário para cada ingrediente: quanto há e quando expira
+  void _sincronizarReceitas() {
+    for (final r in receitas) {
+      for (final ing in r.ingredientes) {
+        if (ing.despensa) continue;
+        final iguais = noFrigorifico
+            .where((i) => i.quantidade > 0 && ingredienteCorresponde(ing, i))
+            .toList();
+        ing.stock = iguais.fold(0.0, (soma, i) => soma + i.quantidade);
+        ing.dias = iguais.isEmpty
+            ? null
+            : iguais.map((i) => i.dias).reduce((a, b) => a < b ? a : b);
+      }
+    }
+  }
+
   // chama-se depois de mudar um item à mão (ex.: no ecrã de detalhe)
   void atualizar() => notifyListeners();
 
@@ -80,15 +107,10 @@ class Frigorifico extends ChangeNotifier {
       data: DateTime.now(),
       pesoKg: item.pesoDe(item.quantidade),
       motivo: motivo ??
-          (item.dias < 0 ? 'Passou a validade' : 'Estragou-se antes'),
+          (item.dias <= 0 ? 'Passou a validade' : 'Estragou-se antes'),
     ));
     item.quantidade = 0;
     item.local = Local.acabou;
-    notifyListeners();
-  }
-
-  void congelar(Item item) {
-    item.local = Local.arca;
     notifyListeners();
   }
 
@@ -125,11 +147,8 @@ class Frigorifico extends ChangeNotifier {
   void cozinhar(Receita r, int pessoas) {
     for (final ing in r.ingredientes) {
       if (ing.despensa) continue;
-      final String chave = ing.nome.length > 4
-          ? ing.nome.substring(0, 4).toLowerCase()
-          : ing.nome.toLowerCase();
       final candidatos = noFrigorifico
-          .where((i) => i.nome.toLowerCase().startsWith(chave))
+          .where((i) => ingredienteCorresponde(ing, i))
           .toList()
         ..sort((a, b) => a.dias.compareTo(b.dias));
       if (candidatos.isEmpty) continue;
@@ -160,6 +179,17 @@ class Frigorifico extends ChangeNotifier {
   }
 }
 
+// O ingrediente corresponde ao item se partilharem uma palavra com 4+ letras
+// ("caixa de sobras de arroz" ↔ "Sobras de arroz"); palavras curtas
+// ("ovo") comparam com o início do nome ("Ovos").
+bool ingredienteCorresponde(Ingrediente ing, Item item) {
+  final nomeItem = item.nome.toLowerCase();
+  final palavras =
+      ing.nome.toLowerCase().split(' ').where((p) => p.length >= 4).toList();
+  if (palavras.isEmpty) return nomeItem.startsWith(ing.nome.toLowerCase());
+  return palavras.any((p) => nomeItem.contains(p));
+}
+
 // uma só instância para a app toda
 final Frigorifico frigorifico = Frigorifico();
 
@@ -175,7 +205,12 @@ List<Evento> _eventosExemplo() {
         nome: 'Exemplo',
         tipo: TipoEvento.usado,
         // DateTime corrige sozinho o mês 0 para dezembro do ano anterior
-        data: DateTime(agora.year, agora.month - mesAtras, 1 + i % 28),
+        // no mês atual, só até hoje (nada no futuro)
+        data: DateTime(
+          agora.year,
+          agora.month - mesAtras,
+          1 + i % (mesAtras == 0 ? agora.day : 28),
+        ),
         pesoKg: 0.125,
       ));
     }
@@ -186,7 +221,11 @@ List<Evento> _eventosExemplo() {
       itemId: 'f$mesAtras-$n',
       nome: nome,
       tipo: TipoEvento.deitadoFora,
-      data: DateTime(agora.year, agora.month - mesAtras, 1 + n),
+      data: DateTime(
+        agora.year,
+        agora.month - mesAtras,
+        mesAtras == 0 ? 1 + n % agora.day : 1 + n,
+      ),
       pesoKg: 0.25,
       motivo: motivo,
     ));

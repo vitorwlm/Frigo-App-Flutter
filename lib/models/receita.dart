@@ -1,5 +1,5 @@
 class Ingrediente {
-  const Ingrediente({
+  Ingrediente({
     required this.nome,
     required this.plural,
     required this.porPessoa,
@@ -15,10 +15,10 @@ class Ingrediente {
   final double porPessoa;
   // 'unidades' ou 'g'
   final String unidade;
-  // quanto tens em casa
-  final double stock;
-  // dias até expirar (null = não está no frigorífico)
-  final int? dias;
+  // quanto tens em casa e dias até expirar (null = não tens).
+  // Sem final: o frigorifico atualiza-os a partir do inventário.
+  double stock;
+  int? dias;
   // azeite, sal… contamos sempre como "tens"
   final bool despensa;
 

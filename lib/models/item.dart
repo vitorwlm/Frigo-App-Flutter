@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // onde está o alimento (separadores do Inventário)
-enum Local { frigorifico, arca, acabou }
+enum Local { frigorifico, acabou }
 
 class Item {
   Item({
@@ -20,7 +20,7 @@ class Item {
 
   final String id;
   final String nome;
-  // sem final: estes mudam quando usas, congelas ou abres
+  // sem final: estes mudam quando usas ou abres
   int quantidade;
   Local local;
   bool aberto;

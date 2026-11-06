@@ -170,12 +170,21 @@ Future<void> _escreverAMao(BuildContext context) async {
   );
 
   if (guardar != true || nome.text.trim().isEmpty) return;
+  final int q = int.tryParse(quantidade.text) ?? 0;
+  final int d = int.tryParse(dias.text) ?? -1;
+  // não aceita quantidade 0 nem validade no passado
+  if (q <= 0 || d < 0) {
+    if (context.mounted) {
+      mostrarMensagem(context, 'Quantidade e dias têm de ser números positivos');
+    }
+    return;
+  }
   frigorifico.adicionar(
     nome: nome.text.trim(),
     // tryParse devolve null se o texto não for um número
-    quantidade: int.tryParse(quantidade.text) ?? 1,
+    quantidade: q,
     unidade: unidade,
-    dias: int.tryParse(dias.text) ?? 3,
+    dias: d,
     categoria: categoria,
   );
   if (context.mounted) mostrarMensagem(context, '${nome.text.trim()} adicionado');

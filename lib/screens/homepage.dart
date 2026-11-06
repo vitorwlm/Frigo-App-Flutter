@@ -23,7 +23,7 @@ import 'receita_detalhe.dart';
 // Os 4 estados do cartão de cima (ecrãs 01, 02, 13 e 19 do Figma)
 enum EstadoFrigu { ok, temperaturaAlta, semLigacao, portaAberta }
 
-// Muda aqui para ver cada estado. Mais tarde vem pelo Supabase.
+// Muda aqui para ver cada estado. Mais tarde vem dos sensores, pelo Supabase.
 const EstadoFrigu estadoTeste = EstadoFrigu.ok;
 
 class Homepage extends StatelessWidget {
@@ -77,41 +77,19 @@ class Homepage extends StatelessWidget {
                 Navigator.pop(folha);
                 final int antes = item.quantidade;
                 frigorifico.usarTudo(item);
-                mostrarAnular(
-                  context,
-                  'Usaste ${item.nome.toLowerCase()} a tempo',
-                  () => frigorifico.repor(item, antes, Local.frigorifico),
-                );
+                mostrarAnular(context, 'Usaste ${item.nome.toLowerCase()} a tempo',
+                    () => frigorifico.repor(item, antes, Local.frigorifico));
               },
             ),
             ListTile(
-              leading: const Icon(Icons.ac_unit),
-              title: const Text('Congelar'),
-              onTap: () {
-                Navigator.pop(folha);
-                frigorifico.congelar(item);
-                mostrarAnular(context, '${item.nome} foi para a arca', () {
-                  // congelar não cria registo, por isso não se usa o repor
-                  item.local = Local.frigorifico;
-                  frigorifico.atualizar();
-                });
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.delete_outline,
-                color: AppTokens.textDanger,
-              ),
+              leading: const Icon(Icons.delete_outline, color: AppTokens.textDanger),
               title: const Text('Deitei fora'),
               onTap: () {
                 Navigator.pop(folha);
                 final int antes = item.quantidade;
                 frigorifico.deitarFora(item);
-                mostrarAnular(
-                  context,
-                  '${item.nome} deitado fora',
-                  () => frigorifico.repor(item, antes, Local.frigorifico),
-                );
+                mostrarAnular(context, '${item.nome} deitado fora',
+                    () => frigorifico.repor(item, antes, Local.frigorifico));
               },
             ),
           ],
@@ -272,7 +250,7 @@ class _HeroInicio extends StatelessWidget {
     Color cor = AppTokens.heroOk;
     String pilula = 'Tudo bem';
     IconData icone = Icons.check_circle;
-    String link = 'Ver foto';
+    String link = 'Detalhes';
     String numero = '$total';
     String unidade = 'alimentos';
     String direita1 = '4,2 °C';
@@ -292,7 +270,8 @@ class _HeroInicio extends StatelessWidget {
         unidade = 'alvo 2–5 °C';
         direita1 = '';
         direita2 = '';
-        mensagem = 'Acima do alvo há 4 min. Vê se a porta ficou mal fechada ou se há algo quente lá dentro.';
+        mensagem =
+            'Acima do alvo há 4 min. Vê se a porta ficou mal fechada ou se há algo quente lá dentro.';
         botao = 'Já fechei a porta';
       case EstadoFrigu.semLigacao:
         cor = AppTokens.heroOffline;
@@ -309,7 +288,8 @@ class _HeroInicio extends StatelessWidget {
         unidade = 'aberta';
         direita1 = '4,6 °C';
         direita2 = 'a subir';
-        mensagem = 'Fecha a porta para o frigorífico voltar aos 2–5 °C. Avisamos outra vez aos 5 min.';
+        mensagem =
+            'Fecha a porta para o frigorífico voltar aos 2–5 °C. Avisamos outra vez aos 5 min.';
     }
 
     return HeroCard(

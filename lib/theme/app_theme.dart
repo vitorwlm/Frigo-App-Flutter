@@ -75,7 +75,7 @@ final ThemeData appTheme = ThemeData(
     ),
   ),
 
-  // Segmento do Figma (Frigorífico / Arca / Acabou)
+  // Segmento do Figma (Frigorífico / Acabou)
   segmentedButtonTheme: SegmentedButtonThemeData(
     style: SegmentedButton.styleFrom(
       selectedBackgroundColor: AppColors.primary600,

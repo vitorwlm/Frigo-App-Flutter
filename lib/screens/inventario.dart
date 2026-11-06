@@ -220,10 +220,6 @@ class _InventarioState extends State<Inventario> {
                   label: Text('Frigorífico ${_contar(Local.frigorifico)}'),
                 ),
                 ButtonSegment(
-                  value: Local.arca,
-                  label: Text('Arca ${_contar(Local.arca)}'),
-                ),
-                ButtonSegment(
                   value: Local.acabou,
                   label: Text('Acabou ${_contar(Local.acabou)}'),
                 ),
@@ -286,8 +282,6 @@ class _InventarioState extends State<Inventario> {
     // no frigorífico separa o que expira em 4 dias ou menos
     final emBreve = lista.where((i) => i.dias <= 4).toList();
     final resto = lista.where((i) => i.dias > 4).toList();
-    final String tituloResto =
-        _local == Local.arca ? 'Na arca' : 'Frescos';
 
     return [
       if (_dica) ...[
@@ -301,7 +295,7 @@ class _InventarioState extends State<Inventario> {
         const SizedBox(height: AppSpacing.mid),
       ],
       if (resto.isNotEmpty) ...[
-        SectionTitle(titulo: tituloResto, contador: resto.length),
+        SectionTitle(titulo: 'Frescos', contador: resto.length),
         const SizedBox(height: AppSpacing.small),
         ListCard(children: [for (final i in resto) _linha(i)]),
       ],
@@ -354,13 +348,6 @@ class _InventarioState extends State<Inventario> {
         ],
       ),
     );
-  }
-
-  String _meses(int dias) {
-    // ~/ = divisão inteira
-    final int m = dias ~/ 30;
-    if (m < 1) return '$dias dias';
-    return m == 1 ? '1 mês' : '$m meses';
   }
 
   // Linha que se pode deslizar (ecrã 22)
@@ -421,10 +408,10 @@ class _InventarioState extends State<Inventario> {
         detalhe: item.aberto
             ? '${item.quantidadeTexto} · aberto'
             : item.quantidadeTexto,
-        estado: _local == Local.arca ? EstadoValidade.marca : estado,
+        estado: estado,
         chip: TagChip(
-          texto: _local == Local.arca ? _meses(item.dias) : prazoDe(item.dias),
-          tom: _local == Local.arca ? TagTom.marca : tomDe(estado),
+          texto: prazoDe(item.dias),
+          tom: tomDe(estado),
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => _abrirDetalhe(item),

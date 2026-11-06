@@ -202,46 +202,6 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
               ),
             ),
             const SizedBox(height: AppSpacing.midsmall),
-            // Congelar
-            if (item.local == Local.frigorifico)
-              AppCard(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTokens.bgTonalSoft,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      child: const Icon(Icons.ac_unit, color: AppColors.primary600),
-                    ),
-                    const SizedBox(width: AppSpacing.midsmall),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Não vais usar a tempo?', style: textTheme.labelLarge),
-                          Text(
-                            'Congela e dura muito mais',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: AppTokens.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    AppButton(
-                      texto: 'Congelar',
-                      tipo: BotaoTipo.tonal,
-                      onPressed: () {
-                        frigorifico.congelar(item);
-                        _sair('${item.nome} foi para a arca');
-                      },
-                    ),
-                  ],
-                ),
-              ),
             // Receitas que usam este alimento
             if (receitas.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.midsmall),

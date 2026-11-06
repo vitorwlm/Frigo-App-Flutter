@@ -63,6 +63,14 @@ class _ReceitasState extends State<Receitas> {
 
   @override
   Widget build(BuildContext context) {
+    // redesenha quando o inventário muda (o que tens muda as receitas)
+    return ListenableBuilder(
+      listenable: frigorifico,
+      builder: (context, _) => _conteudo(context),
+    );
+  }
+
+  Widget _conteudo(BuildContext context) {
     final receitas = frigorifico.receitas;
     // a melhor para hoje: tens tudo e salva mais alimentos a expirar
     final candidatas = receitas.where((r) => r.tensTudo(r.pessoasBase)).toList()

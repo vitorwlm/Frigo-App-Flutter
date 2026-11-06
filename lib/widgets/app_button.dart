@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-// as variantes e os 3 conjuntos (primary, accent, neutral) do Figma
+// as variantes "type" e os 3 conjuntos (primary, accent, neutral) do Figma
 enum BotaoTipo { fill, tonal, ghost, stroke }
 
 enum BotaoCor { primary, accent, neutral }
@@ -68,9 +68,7 @@ class AppButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.primary200,
             foregroundColor: AppColors.primary700,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.midsmall,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.midsmall),
           ),
           child: conteudo,
         );
