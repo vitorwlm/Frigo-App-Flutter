@@ -1,89 +1,106 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_tokens.dart';
 import 'app_card.dart';
+import 'tag_chip.dart';
+
+// tom=marca quando tens tudo, tom=aviso quando falta um ingrediente
+enum ReceitaTom { marca, aviso }
 
 class RecipeCard extends StatelessWidget {
   const RecipeCard({
     super.key,
-    required this.etiqueta,
     required this.titulo,
+    required this.descricao,
+    required this.estado,
     required this.minutos,
-    required this.aExpirar,
+    this.tom = ReceitaTom.marca,
+    this.mostrarFoto = true,
     this.onTap,
   });
 
-  final String etiqueta;
   final String titulo;
+  final String descricao;
+  // texto do primeiro chip: "Tens tudo", "Falta farinha"…
+  final String estado;
   final int minutos;
-  final int aExpirar;
+  final ReceitaTom tom;
+  final bool mostrarFoto;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final bool aviso = tom == ReceitaTom.aviso;
 
     return AppCard(
       onTap: onTap,
       padding: EdgeInsets.zero,
-      child: SizedBox(
-        height: 120,
+      child: IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // lugar da foto da receita
-            Container(width: 104, color: AppColors.gray200),
+            Container(
+              width: 88,
+              color: aviso ? AppTokens.bgWarning : AppTokens.bgTonal,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.restaurant,
+                    size: 30,
+                    color: aviso ? AppColors.warning700 : AppColors.primary600,
+                  ),
+                  if (mostrarFoto) ...[
+                    const SizedBox(height: AppSpacing.small),
+                    Text(
+                      '[foto]',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppTokens.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(AppSpacing.midsmall),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    Text(titulo, style: textTheme.labelLarge),
+                    const SizedBox(height: 4),
                     Text(
-                      etiqueta,
-                      style: textTheme.labelSmall?.copyWith(
-                        color: AppColors.primary600,
+                      descricao,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: AppTokens.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(titulo, style: textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Row(
+                    const SizedBox(height: AppSpacing.small),
+                    // Wrap passa os chips para a linha de baixo se não couberem
+                    Wrap(
+                      spacing: AppSpacing.small,
+                      runSpacing: AppSpacing.small,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.gray200),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text('$minutos min', style: textTheme.labelMedium),
+                        TagChip(
+                          texto: estado,
+                          tom: aviso ? TagTom.aviso : TagTom.marca,
                         ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'Usa $aExpirar a expirar',
-                            style: textTheme.labelMedium?.copyWith(
-                              color: AppColors.primary700,
-                            ),
-                          ),
-                        ),
+                        TagChip(texto: '$minutos min', tom: TagTom.contorno),
                       ],
                     ),
                   ],
                 ),
               ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: AppSpacing.midsmall),
+              child: Icon(Icons.chevron_right),
             ),
           ],
         ),

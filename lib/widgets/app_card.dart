@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_tokens.dart';
 
 class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(AppSpacing.midsmall),
     this.onTap,
     this.color,
     this.borderColor,
+    this.radius = AppRadius.lg,
   });
 
   final Widget child;
@@ -18,15 +20,16 @@ class AppCard extends StatelessWidget {
   final EdgeInsets padding;
   final Color? color;
   final Color? borderColor;
+  final double radius;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       color: color,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        // ?? = se borderColor for null usa o gray200
-        side: BorderSide(color: borderColor ?? AppColors.gray200),
+        borderRadius: BorderRadius.circular(radius),
+        // ?? = se borderColor for null usa o contorno por defeito
+        side: BorderSide(color: borderColor ?? AppTokens.border),
       ),
       // corta o efeito de toque nos cantos arredondados
       clipBehavior: Clip.antiAlias,

@@ -17,7 +17,7 @@ class AppColors {
   static const Color primary800 = Color(0xFF00363D);
   static const Color primary900 = Color(0xFF002126);
 
-  // Danger (vermelho)
+  // Danger (vermelho) = accent no Figma
   static const Color danger100 = Color(0xFFFFE8E6);
   static const Color danger200 = Color(0xFFFFCBC6);
   static const Color danger300 = Color(0xFFFFA29E);
@@ -28,7 +28,7 @@ class AppColors {
   static const Color danger800 = Color(0xFF790D19);
   static const Color danger900 = Color(0xFF57010C);
 
-  // Gray
+  // Gray = neutral no Figma
   static const Color gray100 = Color(0xFFF2F5FC);
   static const Color gray200 = Color(0xFFBEC4D1);
   static const Color gray300 = Color(0xFF9BA2B0);
@@ -50,14 +50,19 @@ class AppColors {
   static const Color success800 = Color(0xFF154F37);
   static const Color success900 = Color(0xFF0C2E20);
 
-  // Warning (âmbar)
-  static const Color warning100 = Color(0xFFFFF7DB);
-  static const Color warning200 = Color(0xFFFFEBA8);
-  static const Color warning300 = Color(0xFFFFD966);
-  static const Color warning400 = Color(0xFFFFC53D);
-  static const Color warning500 = Color(0xFFF59E0B);
-  static const Color warning600 = Color(0xFFD98206);
-  static const Color warning700 = Color(0xFFA8620A);
-  static const Color warning800 = Color(0xFF7A4509);
-  static const Color warning900 = Color(0xFF4A2A06);
+  // Warning (âmbar) = valores do Figma
+  static const Color warning100 = Color(0xFFFFF1C9);
+  static const Color warning200 = Color(0xFFFFE19A);
+  static const Color warning300 = Color(0xFFFFCB5C);
+  static const Color warning400 = Color(0xFFF5B52E);
+  static const Color warning500 = Color(0xFFE3A008);
+  static const Color warning600 = Color(0xFFB98004);
+  static const Color warning700 = Color(0xFF8A5A00);
+  static const Color warning800 = Color(0xFF5E3D00);
+  static const Color warning900 = Color(0xFF3A2500);
+
+  // branco transparente, por cima dos cartões hero
+  // 0x29 = 16 % de opacidade, 0x3D = 24 %
+  static const Color white16 = Color(0x29FFFFFF);
+  static const Color white24 = Color(0x3DFFFFFF);
 }

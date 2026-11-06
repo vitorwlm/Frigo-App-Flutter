@@ -3,6 +3,14 @@ import 'package:flutter/material.dart';
 // height = altura da linha (x tamanho da letra)
 class AppTypography {
   static const TextTheme textTheme = TextTheme(
+    // Números grandes dos cartões hero (Display/Large no Figma)
+    displayLarge: TextStyle(
+      fontSize: 48,
+      fontWeight: FontWeight.w700,
+      height: 1.0,
+      letterSpacing: -1,
+    ),
+
     // Títulos
     headlineLarge: TextStyle(
       fontSize: 32,
@@ -57,9 +65,10 @@ class AppTypography {
       letterSpacing: 0.1,
     ),
     labelMedium: TextStyle(
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: FontWeight.w500,
-      height: 1.33,
+      height: 1.3,
+      letterSpacing: 0.1,
     ),
     labelSmall: TextStyle(
       fontSize: 12,
