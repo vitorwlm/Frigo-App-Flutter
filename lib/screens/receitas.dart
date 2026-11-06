@@ -27,6 +27,35 @@ class Receitas extends StatefulWidget {
 
 class _ReceitasState extends State<Receitas> {
   FiltroReceita _filtro = FiltroReceita.todas;
+  // pesquisa: campo aberto e o texto escrito
+  bool _aProcurar = false;
+  String _procura = '';
+  final _campo = TextEditingController();
+
+  @override
+  void dispose() {
+    _campo.dispose();
+    super.dispose();
+  }
+
+  // procura no título, na descrição e nos ingredientes, sem ligar a maiúsculas
+  bool _encontra(Receita r) {
+    final q = _procura.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return r.titulo.toLowerCase().contains(q) ||
+        r.descricao.toLowerCase().contains(q) ||
+        r.ingredientes.any((i) => i.nome.toLowerCase().contains(q));
+  }
+
+  void _alternarPesquisa() {
+    setState(() {
+      _aProcurar = !_aProcurar;
+      if (!_aProcurar) {
+        _procura = '';
+        _campo.clear();
+      }
+    });
+  }
 
   bool _passa(Receita r) {
     switch (_filtro) {
@@ -90,49 +119,104 @@ class _ReceitasState extends State<Receitas> {
             titulo: 'Receitas',
             acoes: [
               CircleIconButton(
-                icone: Icons.search,
-                tooltip: 'Procurar receita',
-                onPressed: () => debugPrint('procurar'),
+                icone: _aProcurar ? Icons.close : Icons.search,
+                tooltip: _aProcurar ? 'Fechar pesquisa' : 'Procurar receita',
+                onPressed: _alternarPesquisa,
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.small),
-          Wrap(
-            spacing: AppSpacing.small,
-            children: [
-              _chip(FiltroReceita.todas, 'Todas'),
-              _chip(FiltroReceita.tensTudo, 'Tens tudo'),
-              _chip(FiltroReceita.rapidas, 'Até 20 min'),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.midsmall),
-          _Destaque(receita: destaque, onTap: () => _abrir(context, destaque)),
-          const SizedBox(height: AppSpacing.mid),
-          const SectionTitle(titulo: 'Também aproveitam'),
-          const SizedBox(height: AppSpacing.small),
-          if (outras.isEmpty)
-            Text(
-              'Nenhuma receita com este filtro',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTokens.textSecondary,
-              ),
-            ),
-          for (final r in outras) ...[
-            RecipeCard(
-              titulo: r.titulo,
-              descricao: r.descricao,
-              estado: r.estado(r.pessoasBase),
-              minutos: r.minutos,
-              tom: r.tensTudo(r.pessoasBase) ? ReceitaTom.marca : ReceitaTom.aviso,
-              mostrarFoto: false,
-              onTap: () => _abrir(context, r),
-            ),
+          if (_aProcurar) ...[
             const SizedBox(height: AppSpacing.small),
+            TextField(
+              controller: _campo,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              onChanged: (v) => setState(() => _procura = v),
+              decoration: InputDecoration(
+                hintText: 'Receita ou ingrediente',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: AppTokens.bgSurface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: const BorderSide(color: AppTokens.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: const BorderSide(color: AppTokens.border),
+                ),
+              ),
+            ),
           ],
+          // com texto escrito, mostra só os resultados
+          if (_procura.trim().isNotEmpty) ..._resultados(context, receitas)
+          else ..._normal(context, destaque, outras),
         ],
       ),
     );
   }
+
+  List<Widget> _resultados(BuildContext context, List<Receita> receitas) {
+    final encontradas = receitas.where(_encontra).toList();
+    return [
+      const SizedBox(height: AppSpacing.midsmall),
+      SectionTitle(titulo: 'Resultados', contador: encontradas.length),
+      const SizedBox(height: AppSpacing.small),
+      if (encontradas.isEmpty)
+        Text(
+          'Nenhuma receita com "${_procura.trim()}"',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppTokens.textSecondary,
+          ),
+        ),
+      for (final r in encontradas) ..._cartao(context, r),
+    ];
+  }
+
+  List<Widget> _normal(
+    BuildContext context,
+    Receita destaque,
+    List<Receita> outras,
+  ) {
+    return [
+      const SizedBox(height: AppSpacing.small),
+      Wrap(
+        spacing: AppSpacing.small,
+        children: [
+          _chip(FiltroReceita.todas, 'Todas'),
+          _chip(FiltroReceita.tensTudo, 'Tens tudo'),
+          _chip(FiltroReceita.rapidas, 'Até 20 min'),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.midsmall),
+      _Destaque(receita: destaque, onTap: () => _abrir(context, destaque)),
+      const SizedBox(height: AppSpacing.mid),
+      const SectionTitle(titulo: 'Também aproveitam'),
+      const SizedBox(height: AppSpacing.small),
+      if (outras.isEmpty)
+        Text(
+          'Nenhuma receita com este filtro',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppTokens.textSecondary,
+          ),
+        ),
+      for (final r in outras) ..._cartao(context, r),
+    ];
+  }
+
+  // cartão de uma receita + espaço por baixo
+  List<Widget> _cartao(BuildContext context, Receita r) => [
+    RecipeCard(
+      titulo: r.titulo,
+      descricao: r.descricao,
+      estado: r.estado(r.pessoasBase),
+      minutos: r.minutos,
+      tom: r.tensTudo(r.pessoasBase) ? ReceitaTom.marca : ReceitaTom.aviso,
+      mostrarFoto: false,
+      onTap: () => _abrir(context, r),
+    ),
+    const SizedBox(height: AppSpacing.small),
+  ];
 }
 
 // Cartão grande "Melhor para hoje"

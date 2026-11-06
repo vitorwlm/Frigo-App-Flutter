@@ -46,7 +46,11 @@ class ItemRow extends StatelessWidget {
     this.trailing,
     this.acoes,
     this.onTap,
+    this.corTitulo,
   });
+
+  // cor do título (ex.: vermelho em "Terminar sessão")
+  final Color? corTitulo;
 
   // o que fica à esquerda do texto (ex.: CategoryAvatar)
   final Widget? leading;
@@ -119,7 +123,9 @@ class ItemRow extends StatelessWidget {
                                       decoration: TextDecoration.lineThrough,
                                       color: AppTokens.textSecondary,
                                     )
-                                  : textTheme.labelLarge,
+                                  : textTheme.labelLarge?.copyWith(
+                                      color: corTitulo,
+                                    ),
                             ),
                             if (temMeta) ...[
                               const SizedBox(height: 6),

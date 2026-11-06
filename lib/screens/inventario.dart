@@ -14,6 +14,7 @@ import '../widgets/section_title.dart';
 import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
 import 'detalhe_alimento.dart';
+import 'confirmar_sheet.dart';
 import 'filtros_sheet.dart';
 
 // filtros rápidos por baixo da pesquisa
@@ -143,7 +144,7 @@ class _InventarioState extends State<Inventario> {
       MaterialPageRoute(builder: (context) => DetalheAlimento(item: item)),
     );
     // o detalhe pode ter mudado a quantidade: avisa todos os ecrãs
-    frigorifico.atualizar();
+    frigorifico.atualizar(item);
     // mounted = o ecrã ainda existe (pode ter sido fechado durante o await)
     if (mensagem != null && mounted) mostrarMensagem(context, mensagem);
   }
@@ -405,16 +406,21 @@ class _InventarioState extends State<Inventario> {
       child: ItemRow(
         titulo: item.nome,
         leading: CategoryAvatar(icone: iconeCategoria(item.categoria)),
-        detalhe: item.aberto
-            ? '${item.quantidadeTexto} · aberto'
-            : item.quantidadeTexto,
+        detalhe: item.certeza < 60
+            ? 'A confirmar · ${item.certeza} %'
+            : item.aberto
+                ? '${item.quantidadeTexto} · aberto'
+                : item.quantidadeTexto,
         estado: estado,
         chip: TagChip(
           texto: prazoDe(item.dias),
           tom: tomDe(estado),
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => _abrirDetalhe(item),
+        // a câmara não tem a certeza: pergunta primeiro o que é (ecrã 12)
+        onTap: () => item.certeza < 60
+            ? mostrarConfirmar(context, item)
+            : _abrirDetalhe(item),
       ),
     );
   }

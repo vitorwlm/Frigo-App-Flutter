@@ -17,7 +17,7 @@ List<Item> itensExemplo() => [
   Item(id: '5', nome: 'Queijo fresco', quantidade: 1, unidade: 'unidades', validade: _daqui(6), entrada: _daqui(-4), categoria: 'Laticínios'),
   Item(id: '6', nome: 'Leite meio-gordo', quantidade: 1, unidade: 'L', validade: _daqui(9), entrada: _daqui(-2), aberto: true, categoria: 'Laticínios', prateleira: 'Porta'),
   Item(id: '7', nome: 'Fiambre', quantidade: 150, unidade: 'g', validade: _daqui(5), entrada: _daqui(-2), categoria: 'Carne e peixe'),
-  Item(id: '8', nome: 'Iogurte grego', quantidade: 1, unidade: 'unidades', validade: _daqui(12), entrada: _daqui(0), categoria: 'Laticínios', certeza: 54),
+  Item(id: '8', nome: 'Iogurte grego', quantidade: 1, unidade: 'unidades', validade: _daqui(12), entrada: _daqui(0), categoria: 'Laticínios', prateleira: 'Prateleira de cima', certeza: 54, alternativas: {'Iogurte natural': 31}),
   Item(id: '12', nome: 'Manteiga', quantidade: 0, unidade: 'unidades', validade: _daqui(-3), entrada: _daqui(-40), local: Local.acabou, categoria: 'Laticínios'),
   Item(id: '13', nome: 'Tomates', quantidade: 0, unidade: 'unidades', validade: _daqui(-1), entrada: _daqui(-8), local: Local.acabou, categoria: 'Legumes'),
 ];

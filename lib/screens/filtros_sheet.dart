@@ -55,6 +55,7 @@ Future<Filtros?> mostrarFiltros(
     context: context,
     // deixa a folha ser mais alta que meio ecrã
     isScrollControlled: true,
+    useSafeArea: true,
     showDragHandle: true,
     backgroundColor: AppTokens.bgApp,
     builder: (context) {
@@ -63,7 +64,7 @@ Future<Filtros?> mostrarFiltros(
       return StatefulBuilder(
         builder: (context, setFolha) {
           return SafeArea(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.midsmall,
                 0,

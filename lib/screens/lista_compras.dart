@@ -34,12 +34,15 @@ class ListaCompras extends StatelessWidget {
     final String texto = _textoLista(porComprar);
     showModalBottomSheet<void>(
       context: context,
+      // deixa a folha crescer e fazer scroll em ecrãs pequenos
+      isScrollControlled: true,
+      useSafeArea: true,
       showDragHandle: true,
       backgroundColor: AppTokens.bgApp,
       builder: (folha) {
         final textTheme = Theme.of(folha).textTheme;
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.midsmall,
               0,

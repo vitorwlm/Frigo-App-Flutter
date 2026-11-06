@@ -13,12 +13,15 @@ import 'filtros_sheet.dart';
 void mostrarAdicionar(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
+    // deixa a folha crescer e fazer scroll em ecrãs pequenos
+    isScrollControlled: true,
+    useSafeArea: true,
     showDragHandle: true,
     backgroundColor: AppTokens.bgApp,
     builder: (folha) {
       final textTheme = Theme.of(folha).textTheme;
       return SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.midsmall,
             0,

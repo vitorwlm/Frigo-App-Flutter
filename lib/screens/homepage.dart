@@ -15,16 +15,19 @@ import '../widgets/screen_header.dart';
 import '../widgets/section_title.dart';
 import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
-import 'admin.dart';
+import 'avisos.dart';
+import 'definicoes.dart';
 import 'detalhe_alimento.dart';
-import 'detalhes.dart';
+import 'historico_temperatura.dart';
 import 'receita_detalhe.dart';
 
-// Os 4 estados do cartão de cima (ecrãs 01, 02, 13 e 19 do Figma)
-enum EstadoFrigu { ok, temperaturaAlta, semLigacao, portaAberta }
-
-// Muda aqui para ver cada estado. Mais tarde vem dos sensores, pelo Supabase.
-const EstadoFrigu estadoTeste = EstadoFrigu.ok;
+// "há 2 min", "há 3 h"
+String _ha(DateTime t) {
+  final int min = DateTime.now().difference(t).inMinutes;
+  if (min < 1) return 'agora';
+  if (min < 60) return 'há $min min';
+  return 'há ${min ~/ 60} h';
+}
 
 class Homepage extends StatelessWidget {
   const Homepage({super.key});
@@ -49,7 +52,7 @@ class Homepage extends StatelessWidget {
       context,
       MaterialPageRoute(builder: (context) => DetalheAlimento(item: item)),
     );
-    frigorifico.atualizar();
+    frigorifico.atualizar(item);
     if (mensagem != null && context.mounted) mostrarMensagem(context, mensagem);
   }
 
@@ -57,9 +60,12 @@ class Homepage extends StatelessWidget {
   void _maisOpcoes(BuildContext context, Item item) {
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
       showDragHandle: true,
       builder: (folha) => SafeArea(
-        child: Column(
+        child: SingleChildScrollView(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
@@ -93,6 +99,7 @@ class Homepage extends StatelessWidget {
               },
             ),
           ],
+          ),
         ),
       ),
     );
@@ -132,31 +139,52 @@ class Homepage extends StatelessWidget {
             children: [
               ScreenHeader(
                 subtitulo: saudacao,
-                titulo: 'Vítor',
+                titulo: frigorifico.nomeUtilizador.isEmpty
+                    ? 'Olá'
+                    : frigorifico.nomeUtilizador,
                 acoes: [
                   CircleIconButton(
                     icone: Icons.notifications_none,
                     tooltip: 'Avisos',
                     badge: urgentes > 0 ? '$urgentes' : null,
-                    onPressed: () => debugPrint('avisos'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Avisos()),
+                    ),
                   ),
                   CircleIconButton(
                     icone: Icons.settings_outlined,
                     tooltip: 'Definições',
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const Admin()),
+                      MaterialPageRoute(builder: (context) => const Definicoes()),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: AppSpacing.midsmall),
+              // o Supabase falhou (ex.: SQL por correr): avisa e usa os falsos
+              if (!frigorifico.naNuvem && frigorifico.erroNuvem != null) ...[
+                AppCard(
+                  child: Text(
+                    'Não foi possível ler o Supabase. A mostrar dados de '
+                    'exemplo.\n${frigorifico.erroNuvem}',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: AppTokens.textDanger,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.midsmall),
+              ],
               _HeroInicio(
-                estado: estadoTeste,
+                // o estado vem dos sensores (Demonstração nas Definições)
+                estado: frigorifico.estado,
                 total: frigorifico.totalEmCasa,
                 onAbrir: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const Detalhes()),
+                  MaterialPageRoute(
+                    builder: (context) => const HistoricoTemperatura(),
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.mid),
@@ -177,7 +205,7 @@ class Homepage extends StatelessWidget {
                     for (final item in aExpirar) _linha(context, item),
                   ],
                 ),
-              if (estadoTeste != EstadoFrigu.temperaturaAlta) ...[
+              if (frigorifico.estado != EstadoFrigu.temperaturaAlta) ...[
                 const SizedBox(height: AppSpacing.mid),
                 const SectionTitle(titulo: 'Cozinha isto hoje'),
                 const SizedBox(height: AppSpacing.small),
@@ -253,10 +281,14 @@ class _HeroInicio extends StatelessWidget {
     String link = 'Detalhes';
     String numero = '$total';
     String unidade = 'alimentos';
-    String direita1 = '4,2 °C';
-    String direita2 = '62 % humidade';
-    String mensagem = 'Visto há 2 min · porta fechada';
+    final f = frigorifico;
+    final String alvo =
+        '${numeroPt(f.alvoMin)}–${numeroPt(f.alvoMax)} °C';
+    String direita1 = graus(f.temperatura);
+    String direita2 = '${f.humidade} % humidade';
+    String mensagem = 'Visto ${_ha(f.ultimaLeitura)} · porta fechada';
     String? botao;
+    VoidCallback? acao;
 
     switch (estado) {
       case EstadoFrigu.ok:
@@ -266,30 +298,42 @@ class _HeroInicio extends StatelessWidget {
         pilula = 'Temperatura alta';
         icone = Icons.warning_amber_rounded;
         link = 'Histórico';
-        numero = '7,4 °C';
-        unidade = 'alvo 2–5 °C';
+        numero = graus(f.temperatura);
+        unidade = 'alvo $alvo';
         direita1 = '';
         direita2 = '';
         mensagem =
-            'Acima do alvo há 4 min. Vê se a porta ficou mal fechada ou se há algo quente lá dentro.';
+            'Acima do alvo. Vê se a porta ficou mal fechada ou se há algo quente lá dentro.';
         botao = 'Já fechei a porta';
+        acao = () {
+          f.fecharPorta();
+          mostrarMensagem(context, 'Avisamos se a temperatura não voltar ao alvo');
+        };
       case EstadoFrigu.semLigacao:
         cor = AppTokens.heroOffline;
         pilula = 'Sem ligação';
         icone = Icons.wifi_off;
-        mensagem = 'Última foto há 3 h · a lista pode estar desatualizada';
+        link = '';
+        mensagem =
+            'Última leitura ${_ha(f.ultimaLeitura)} · a lista pode estar desatualizada';
         botao = 'Tentar ligar de novo';
+        acao = () async {
+          mostrarMensagem(context, 'A ligar ao Frigu…');
+          await f.reconectar();
+          if (context.mounted) mostrarMensagem(context, 'Ligado de novo');
+        };
       case EstadoFrigu.portaAberta:
         cor = AppTokens.heroWarning;
         pilula = 'Porta aberta';
         icone = Icons.door_front_door_outlined;
         link = '';
-        numero = '2 min';
+        final int aberta =
+            DateTime.now().difference(f.portaAbertaDesde!).inMinutes;
+        numero = '$aberta min';
         unidade = 'aberta';
-        direita1 = '4,6 °C';
         direita2 = 'a subir';
         mensagem =
-            'Fecha a porta para o frigorífico voltar aos 2–5 °C. Avisamos outra vez aos 5 min.';
+            'Fecha a porta para o frigorífico voltar aos $alvo. Avisamos outra vez aos 5 min.';
     }
 
     return HeroCard(
@@ -360,7 +404,7 @@ class _HeroInicio extends StatelessWidget {
               cor: BotaoCor.neutral,
               icone: estado == EstadoFrigu.temperaturaAlta ? Icons.check : null,
               expandir: true,
-              onPressed: () => debugPrint(botao!),
+              onPressed: acao,
             ),
           ],
         ],

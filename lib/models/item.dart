@@ -16,22 +16,30 @@ class Item {
     this.categoria = 'Outros',
     this.prateleira = 'Prateleira do meio',
     this.certeza = 100,
+    this.alternativas = const {},
+    this.motivoSaida,
   });
 
   final String id;
-  final String nome;
+  // sem final: muda quando confirmas o que a câmara viu
+  String nome;
   // sem final: estes mudam quando usas ou abres
   int quantidade;
   Local local;
   bool aberto;
   final String unidade;
-  final DateTime validade;
+  // sem final: podem mudar no Editar do detalhe
+  DateTime validade;
   // dia em que a câmara o viu pela primeira vez
   final DateTime entrada;
-  final String categoria;
+  String categoria;
   final String prateleira;
-  // 0–100, vem do Gemini
-  final int certeza;
+  // 0–100, vem do Gemini; passa a 100 quando confirmas
+  int certeza;
+  // outros palpites do Gemini: nome → certeza (ecrã 12)
+  final Map<String, int> alternativas;
+  // porque saiu: 'consumido' ou 'desperdicado' (coluna motivo_saida)
+  String? motivoSaida;
 
   // get = propriedade calculada, usa-se como item.dias (sem parênteses)
   int get dias {

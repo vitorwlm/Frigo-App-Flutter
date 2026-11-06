@@ -12,6 +12,7 @@ import '../widgets/circle_icon_button.dart';
 import '../widgets/hero_card.dart';
 import '../widgets/screen_header.dart';
 import '../widgets/tag_chip.dart';
+import 'filtros_sheet.dart';
 import 'receita_detalhe.dart';
 
 const List<String> _meses = [
@@ -50,6 +51,104 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
 
   void _sair(String mensagem) => Navigator.pop(context, mensagem);
 
+  // Folha para corrigir o que a câmara leu: nome, validade e categoria
+  Future<void> _editar() async {
+    final nome = TextEditingController(text: item.nome);
+    DateTime validade = item.validade;
+    String categoria = item.categoria;
+
+    final bool? guardar = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: AppTokens.bgApp,
+      builder: (folha) => StatefulBuilder(
+        builder: (folha, setFolha) {
+          final textTheme = Theme.of(folha).textTheme;
+          return Padding(
+            // sobe a folha quando o teclado abre
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(folha).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.midsmall,
+                0,
+                AppSpacing.midsmall,
+                AppSpacing.mid,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Editar alimento', style: textTheme.headlineMedium),
+                  const SizedBox(height: AppSpacing.midsmall),
+                  TextField(
+                    controller: nome,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(labelText: 'Nome'),
+                  ),
+                  const SizedBox(height: AppSpacing.midsmall),
+                  // DropdownButtonFormField = lista com o aspeto de um campo
+                  DropdownButtonFormField<String>(
+                    initialValue: todasCategorias.contains(categoria)
+                        ? categoria
+                        : 'Outros',
+                    decoration: const InputDecoration(labelText: 'Categoria'),
+                    items: [
+                      for (final c in todasCategorias)
+                        DropdownMenuItem(value: c, child: Text(c)),
+                    ],
+                    onChanged: (v) => setFolha(() => categoria = v!),
+                  ),
+                  const SizedBox(height: AppSpacing.midsmall),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.event_outlined),
+                    title: const Text('Validade'),
+                    subtitle: Text(_data(validade)),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () async {
+                      // calendário do Material; devolve null se cancelar
+                      final escolhida = await showDatePicker(
+                        context: folha,
+                        initialDate: validade,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2035),
+                      );
+                      if (escolhida != null) {
+                        setFolha(() => validade = escolhida);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.midsmall),
+                  AppButton(
+                    texto: 'Guardar',
+                    expandir: true,
+                    onPressed: () => Navigator.pop(folha, true),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    final String novoNome = nome.text.trim();
+    nome.dispose();
+    if (guardar != true || novoNome.isEmpty) return;
+    frigorifico.editar(
+      item,
+      nome: novoNome,
+      validade: validade,
+      categoria: categoria,
+    );
+    // redesenha este ecrã com os valores novos
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -80,7 +179,7 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                 CircleIconButton(
                   icone: Icons.edit_outlined,
                   tooltip: 'Editar',
-                  onPressed: () => debugPrint('editar'),
+                  onPressed: _editar,
                 ),
               ],
             ),
