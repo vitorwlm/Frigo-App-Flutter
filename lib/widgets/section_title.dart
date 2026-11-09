@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 
+// * Título de secção com contador opcional ("A expirar 3"): o número diz
+// * logo quantos há sem contar as linhas
 class SectionTitle extends StatelessWidget {
   const SectionTitle({super.key, required this.titulo, this.contador});
 
@@ -14,7 +16,7 @@ class SectionTitle extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Row(
-      // alinha os dois textos pela linha de base das letras
+      // ? alinha os dois textos pela linha de base das letras
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [

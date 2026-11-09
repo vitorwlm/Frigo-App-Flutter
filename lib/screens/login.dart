@@ -6,8 +6,12 @@ import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 
-// Entrar e Criar conta no mesmo ecrã (o Figma ainda não tem este ecrã:
-// segue o estilo das Boas-vindas)
+// * ECRÃ LOGIN — o 1.º ecrã quando não há sessão (aberto pelo _PortaoLogin).
+// * Fluxo: Entrar → signInWithPassword → o _PortaoLogin vê a sessão e abre a
+// * app; Criar conta → signUp → Boas-vindas (onboarding.dart).
+// * Entrar e Criar conta no mesmo ecrã, porque só muda um campo (Nome) e
+// * assim não há dois ecrãs quase iguais. O Figma ainda não tem este ecrã:
+// * segue o estilo das Boas-vindas.
 class Login extends StatefulWidget {
   const Login({super.key});
 
@@ -16,18 +20,22 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  // false = Entrar, true = Criar conta
+  // ? false = Entrar, true = Criar conta
   bool _registar = false;
+  // ? desliga os botões enquanto espera pelo Supabase (evita 2 contas)
   bool _aEnviar = false;
   bool _verPalavraPasse = false;
   String? _erro;
 
-  // GlobalKey dá acesso ao Form para validar todos os campos de uma vez
+  // ? GlobalKey dá acesso ao Form para validar todos os campos de uma vez,
+  // ? em vez de verificar cada controller à mão
   final _form = GlobalKey<FormState>();
   final _nome = TextEditingController();
   final _email = TextEditingController();
   final _palavraPasse = TextEditingController();
 
+  // ! os controllers têm de ser libertados quando o ecrã fecha, senão ficam
+  // ! na memória
   @override
   void dispose() {
     _nome.dispose();
@@ -37,7 +45,8 @@ class _LoginState extends State<Login> {
   }
 
   Future<void> _enviar() async {
-    // corre os validator de cada campo; para se algum falhar
+    // ? corre os validator de cada campo; para se algum falhar, assim não
+    // ? gasto um pedido ao Supabase com um email mal escrito
     if (!_form.currentState!.validate()) return;
     setState(() {
       _aEnviar = true;
@@ -47,33 +56,38 @@ class _LoginState extends State<Login> {
       final email = _email.text.trim();
       final pass = _palavraPasse.text;
       if (_registar) {
-        // o nome vai em data: o trigger criar_perfil lê-o para a tabela perfis
+        // ? o nome vai em data porque o perfil é criado pelo trigger
+        // ? criar_perfil no Supabase, que o lê daqui para a tabela perfis
         final r = await supabase.auth.signUp(
           email: email,
           password: pass,
           data: {'nome': _nome.text.trim()},
         );
         if (r.session == null) {
-          // o projeto pede confirmação por email
+          // ? sem sessão = o projeto pede confirmação por email: volta ao
+          // ? modo Entrar e explica o que fazer
           setState(() {
             _registar = false;
             _erro = 'Conta criada. Confirma o email e depois entra.';
           });
         } else {
-          // a seguir ao registo mostra as Boas-vindas
+          // ? a seguir ao registo mostra as Boas-vindas (o main.dart lê isto)
           frigorifico.verBoasVindas = true;
         }
       } else {
         await supabase.auth.signInWithPassword(email: email, password: pass);
       }
-      // com sessão, o _PortaoLogin do main.dart troca de ecrã sozinho
+      // ? Não faço Navigator.push: com sessão, o _PortaoLogin do main.dart
+      // ? troca de ecrã sozinho
     } catch (e) {
       setState(() => _erro = erroEmPortugues(e));
     } finally {
+      // ! mounted: se já trocou de ecrã, este State já não existe
       if (mounted) setState(() => _aEnviar = false);
     }
   }
 
+  // ? um só método para o aspeto dos 3 campos, para não repetir as bordas
   InputDecoration _campo(String rotulo, IconData icone, {Widget? sufixo}) {
     final borda = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -132,6 +146,7 @@ class _LoginState extends State<Login> {
                 ),
               ),
               const SizedBox(height: AppSpacing.mid),
+              // ? ...[ ] espalha vários widgets dentro do if (o Nome e o espaço)
               if (_registar) ...[
                 TextFormField(
                   controller: _nome,
@@ -184,6 +199,7 @@ class _LoginState extends State<Login> {
                 Text(
                   _erro!,
                   style: textTheme.bodySmall?.copyWith(
+                    // ? a mensagem de conta criada não é um erro: vai a teal
                     color: _erro!.startsWith('Conta criada')
                         ? AppTokens.textBrand
                         : AppTokens.textDanger,

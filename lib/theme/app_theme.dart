@@ -4,7 +4,12 @@ import 'app_colors.dart';
 import 'app_spacing.dart';
 import 'app_typography.dart';
 
-// os botões do Figma têm cantos de 8 e 48 de altura
+// * Tema global, ligado no main.dart. Define aqui o aspeto dos widgets do
+// * Material (botões, barra de baixo, cartões…) para os ecrãs não terem de
+// * repetir estilos em cada widget.
+
+// ? os botões do Figma têm cantos de 8 e 48 de altura (48 também é o mínimo
+// ? recomendado para um dedo acertar no botão)
 final RoundedRectangleBorder _formaBotao = RoundedRectangleBorder(
   borderRadius: BorderRadius.circular(AppRadius.sm),
 );
@@ -12,7 +17,8 @@ const Size _tamanhoBotao = Size(64, 48);
 
 final ThemeData appTheme = ThemeData(
   useMaterial3: true,
-  // fromSeed gera os tons a partir de uma cor; os outros ficam fixos na paleta
+  // ? fromSeed gera os tons que eu não defini a partir do teal; os que importam
+  // ? ficam fixos na paleta para baterem certo com o Figma
   colorScheme: ColorScheme.fromSeed(
     seedColor: AppColors.primary500,
     primary: AppColors.primary500,
@@ -22,7 +28,8 @@ final ThemeData appTheme = ThemeData(
   ),
   scaffoldBackgroundColor: AppColors.gray100,
   fontFamily: 'Montserrat',
-  // apply mete a mesma cor em todos os estilos de texto
+  // ? apply mete a mesma cor em todos os estilos de texto, em vez de a
+  // ? repetir em cada TextStyle do AppTypography
   textTheme: AppTypography.textTheme.apply(
     bodyColor: AppColors.gray900,
     displayColor: AppColors.gray900,
@@ -37,7 +44,8 @@ final ThemeData appTheme = ThemeData(
     margin: EdgeInsets.zero,
   ),
 
-  // botões: só a forma, a altura e a letra; as cores ficam no AppButton
+  // ? botões: só a forma, a altura e a letra; as cores ficam no AppButton,
+  // ? porque há variantes (principal, perigo, tonal) com cores diferentes
   filledButtonTheme: FilledButtonThemeData(
     style: FilledButton.styleFrom(
       shape: _formaBotao,
@@ -66,7 +74,7 @@ final ThemeData appTheme = ThemeData(
     shape: _formaBotao,
   ),
 
-  // barra de baixo como no Figma: fundo cinza claro e pílula teal clara
+  // ? barra de baixo como no Figma: fundo cinza claro e pílula teal clara
   navigationBarTheme: NavigationBarThemeData(
     backgroundColor: AppColors.gray100,
     indicatorColor: AppColors.primary200,
@@ -75,7 +83,7 @@ final ThemeData appTheme = ThemeData(
     ),
   ),
 
-  // Segmento do Figma (Frigorífico / Acabou)
+  // ? Segmento do Figma (Frigorífico / Acabou, no Inventário)
   segmentedButtonTheme: SegmentedButtonThemeData(
     style: SegmentedButton.styleFrom(
       selectedBackgroundColor: AppColors.primary600,

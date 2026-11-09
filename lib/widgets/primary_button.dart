@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
+// ? Botão das primeiras aulas, antes do AppButton. Já não é usado em nenhum
+// ? ecrã (o AppButton faz o mesmo e segue o Figma): pode ser apagado.
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,

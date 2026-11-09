@@ -1,3 +1,9 @@
+// * ECRÃ IMPACTO (ecrã 09 do Figma) — 4.º separador da HomeShell.
+// * Mostra o resultado do ODS 12.3: % aproveitado (vs período anterior),
+// * kg salvos → € e CO₂e, porque se deita fora e o alimento mais
+// * desperdiçado (com atalho "Pack de 1" para a lista de compras).
+// * Os números saem dos Eventos que o frigorifico regista em usar/deitarFora.
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -16,7 +22,8 @@ import '../widgets/small_widgets.dart';
 import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
 
-// Estimativas para transformar kg em € e em CO2 (citar a fonte no relatório)
+// ? Estimativas para transformar kg em € e em CO2 (citar a fonte no relatório).
+// ? Numa classe à parte para estarem num só sítio e serem fáceis de mudar
 class Estimativas {
   static const double euroPorKg = 4;
   static const double co2PorKg = 2.5;
@@ -27,9 +34,10 @@ const List<String> _nomesMeses = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
+// ? Mês / Ano: o mesmo ecrã serve os dois, só muda o filtro dos eventos
 enum Periodo { mes, ano }
 
-// Ecrã 09 do Figma
+// ? StatefulWidget porque guarda o período escolhido
 class Impacto extends StatefulWidget {
   const Impacto({super.key});
 
@@ -40,7 +48,8 @@ class Impacto extends StatefulWidget {
 class _ImpactoState extends State<Impacto> {
   Periodo _periodo = Periodo.mes;
 
-  // true se o evento for do mês (ou ano) que está a ver; recuar = 1 para o anterior
+  // ? true se o evento for do mês (ou ano) que está a ver; recuar = 1 para o
+  // ? anterior. Um só método para os dois, para a comparação ser justa
   bool _noPeriodo(Evento e, {int recuar = 0}) {
     final agora = DateTime.now();
     if (_periodo == Periodo.ano) return e.data.year == agora.year - recuar;
@@ -48,7 +57,8 @@ class _ImpactoState extends State<Impacto> {
     return e.data.year == alvo.year && e.data.month == alvo.month;
   }
 
-  // percentagem aproveitada; null se não houver dados
+  // ? percentagem aproveitada; null se não houver dados (em vez de 0 %, que
+  // ? parecia que se deitou tudo fora)
   double? _percentagem(List<Evento> eventos) {
     final usados = eventos.where((e) => e.tipo == TipoEvento.usado).length;
     final total = eventos.length;
@@ -56,10 +66,13 @@ class _ImpactoState extends State<Impacto> {
     return usados / total * 100;
   }
 
+  // ? 1 casa decimal com vírgula ("2,4 kg")
   String _num(double v) => v.toStringAsFixed(1).replaceAll('.', ',');
 
   @override
   Widget build(BuildContext context) {
+    // ? ListenableBuilder: cada Usei / Deitei fora noutro ecrã atualiza já
+    // ? os números daqui
     return ListenableBuilder(
       listenable: frigorifico,
       builder: (context, _) {
@@ -76,11 +89,12 @@ class _ImpactoState extends State<Impacto> {
 
         final double? pct = _percentagem(eventos);
         final double? pctAntes = _percentagem(anteriores);
-        // fold = soma: começa em 0 e vai juntando o peso de cada evento
+        // ? fold = soma: começa em 0 e vai juntando o peso de cada evento
         final double kgSalvos = usados.fold(0.0, (soma, e) => soma + e.pesoKg);
         final double kgFora = fora.fold(0.0, (soma, e) => soma + e.pesoKg);
 
-        // conta os motivos: {'Passou a validade': 3, ...}
+        // ? conta os motivos: {'Passou a validade': 3, ...}, ordenados do
+        // ? mais comum para o menos, para mostrar onde está o problema
         final Map<String, int> motivos = {};
         for (final e in fora) {
           final m = e.motivo ?? 'Outro';
@@ -89,7 +103,8 @@ class _ImpactoState extends State<Impacto> {
         final listaMotivos = motivos.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
 
-        // o alimento deitado fora mais vezes
+        // ? o alimento deitado fora mais vezes: é o conselho mais útil
+        // ? (comprar menos desse)
         final Map<String, int> porNome = {};
         for (final e in fora) {
           porNome[e.nome] = (porNome[e.nome] ?? 0) + 1;
@@ -104,9 +119,11 @@ class _ImpactoState extends State<Impacto> {
             ? _nomesMeses[agora.month - 1]
             : '${agora.year}';
         final String nomeAnterior = _periodo == Periodo.mes
+            // ? (mês + 10) % 12 = índice do mês anterior (janeiro → dezembro)
             ? _nomesMeses[(agora.month + 10) % 12].toLowerCase()
             : '${agora.year - 1}';
 
+        // ? pp = pontos percentuais (diferença entre duas percentagens)
         String comparacao = '';
         if (pct != null && pctAntes != null) {
           final int dif = (pct - pctAntes).round();
@@ -157,7 +174,8 @@ class _ImpactoState extends State<Impacto> {
                     ),
                     const SizedBox(height: AppSpacing.midsmall),
                     if (pct != null)
-                      // barra dividida: flex só aceita inteiros
+                      // ? barra dividida em 2 (aproveitado / fora); Expanded com
+                      // ? flex reparte a largura, e flex só aceita inteiros
                       Row(
                         children: [
                           if (pct.round() > 0)
@@ -236,7 +254,7 @@ class _ImpactoState extends State<Impacto> {
                       ReasonBar(
                         motivo: m.key,
                         valor: m.value,
-                        // parte de todos os deitados fora
+                        // ? parte de todos os deitados fora (0 a 1, para a barra)
                         fracao: m.value / fora.length,
                       ),
                   ],
@@ -275,7 +293,8 @@ class _ImpactoState extends State<Impacto> {
   }
 }
 
-// Um dos 3 cartões por baixo do hero
+// ? Um dos 3 cartões por baixo do hero (kg, €, CO₂e); widget à parte porque
+// ? são 3 iguais
 class _Equivalencia extends StatelessWidget {
   const _Equivalencia({required this.valor, required this.legenda});
 

@@ -1,3 +1,9 @@
+// * ECRÃ AVISOS (ecrã 04 do Figma). Abre pelo sino do Início.
+// * Fluxo: regra de aviso (toca → Definições) → "A expirar" dentro dos dias
+// * escolhidos (o que expira hoje tem Ver receita / Usei / Deitei fora) →
+// * "Recentes" dos últimos 3 dias (alimentos usados ou deitados fora e
+// * alertas dos sensores).
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -17,7 +23,8 @@ import '../widgets/tag_chip.dart';
 import 'definicoes.dart';
 import 'receita_detalhe.dart';
 
-// Uma linha da secção "Recentes": vem de um Evento ou de um AlertaSensor
+// ? Uma linha da secção "Recentes": vem de um Evento ou de um AlertaSensor.
+// ? Classe só para este ecrã, para juntar os dois tipos numa só lista ordenada
 class _Registo {
   _Registo(this.titulo, this.detalhe, this.data, this.estado, [this.chip]);
 
@@ -28,6 +35,7 @@ class _Registo {
   final String? chip;
 }
 
+// ? "hoje, 9:05", "ontem, 18:30", "há 3 dias": mais fácil de ler do que a data
 String _quando(DateTime d) {
   final hoje = DateUtils.dateOnly(DateTime.now());
   final dias = hoje.difference(DateUtils.dateOnly(d)).inDays;
@@ -37,11 +45,12 @@ String _quando(DateTime d) {
   return 'há $dias dias';
 }
 
-// Ecrã 04 do Figma
+// ? StatelessWidget: tudo vem do frigorifico, ouvido pelo ListenableBuilder
 class Avisos extends StatelessWidget {
   const Avisos({super.key});
 
-  // receita que usa este alimento (ou null se não houver)
+  // ? receita que usa este alimento (ou null se não houver), para o botão
+  // ? "Ver receita": a forma mais útil de salvar o que expira hoje
   Receita? _receitaPara(Item item) {
     for (final r in frigorifico.receitas) {
       if (r.ingredientes.any((ing) => ingredienteCorresponde(ing, item))) {
@@ -51,14 +60,16 @@ class Avisos extends StatelessWidget {
     return null;
   }
 
-  // o que aconteceu nos últimos 3 dias, do mais recente para o mais antigo
+  // ? o que aconteceu nos últimos 3 dias, do mais recente para o mais antigo
+  // ? (mais do que isso já não é um aviso, está no Impacto)
   List<_Registo> _recentes() {
     final limite = DateUtils.dateOnly(DateTime.now())
         .subtract(const Duration(days: 3));
     final lista = <_Registo>[];
 
     for (final e in frigorifico.eventos) {
-      // os eventos "Exemplo" só servem para o Impacto ter números
+      // ? os eventos "Exemplo" só servem para o Impacto ter números; aqui
+      // ? apareciam como linhas sem sentido
       if (e.nome == 'Exemplo' || e.data.isBefore(limite)) continue;
       if (e.tipo == TipoEvento.usado) {
         lista.add(_Registo('${e.nome} aproveitado', 'Usado a tempo · ${_quando(e.data)}',
@@ -74,11 +85,12 @@ class Avisos extends StatelessWidget {
       lista.add(_Registo(a.titulo, '${a.detalhe} · ${_quando(a.data)}', a.data,
           EstadoValidade.perigo));
     }
-    // sort com compareTo ao contrário = mais recente primeiro
+    // ? sort com compareTo ao contrário = mais recente primeiro
     lista.sort((a, b) => b.data.compareTo(a.data));
     return lista;
   }
 
+  // ? Guardam o "antes" para o Anular da snackbar conseguir desfazer
   void _usei(BuildContext context, Item item) {
     final int antes = item.quantidade;
     final Local localAntes = item.local;
@@ -101,7 +113,8 @@ class Avisos extends StatelessWidget {
         ? '${item.quantidadeTexto} · aberto'
         : item.quantidadeTexto;
 
-    // o que expira hoje leva botões; o resto só o chip do prazo
+    // ? o que expira hoje (ou já expirou) leva botões porque é para agir já;
+    // ? o resto só o chip do prazo, para o ecrã não ficar cheio de botões
     if (item.dias > 0) {
       return ItemRow(
         titulo: item.nome,
@@ -163,7 +176,7 @@ class Avisos extends StatelessWidget {
           listenable: frigorifico,
           builder: (context, _) {
             final int dias = frigorifico.diasAviso;
-            // dentro do prazo de aviso escolhido nas Definições
+            // ? dentro do prazo de aviso escolhido nas Definições (1, 2 ou 3 dias)
             final alimentos = frigorifico.aExpirar
                 .where((i) => i.dias <= dias)
                 .toList();
@@ -189,6 +202,7 @@ class Avisos extends StatelessWidget {
                       titulo: dias == 1
                           ? 'Avisar 1 dia antes'
                           : 'Avisar $dias dias antes',
+                      // TODO: o plano diz notificação diária às 18h com a receita; acertar este texto quando houver notificações
                       detalhe: frigorifico.resumoDiario
                           ? 'Resumo diário às 8:00'
                           : 'Resumo diário desligado',

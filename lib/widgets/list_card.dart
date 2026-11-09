@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_tokens.dart';
 import 'app_card.dart';
 
-// Moldura branca das listas, com uma linha entre cada filho
+// * Moldura branca das listas, com uma linha entre cada filho (não depois do
+// * último). Assim cada ecrã só passa as linhas e não repete os Divider
 class ListCard extends StatelessWidget {
   const ListCard({super.key, required this.children});
 

@@ -1,3 +1,8 @@
+// * ONBOARDING — só aparece a seguir a criar conta (frigorifico.verBoasVindas).
+// * Fluxo: Boas-vindas (ecrã 15) → Começar → Ligar ao frigorífico (ecrã 16)
+// * → Ligar → irParaApp → HomeShell. O Ligar ao frigorífico também abre pelas
+// * Definições (dasDefinicoes), e aí volta atrás no fim.
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -12,15 +17,17 @@ import '../widgets/small_widgets.dart';
 import '../widgets/tag_chip.dart';
 import 'confirmar_sheet.dart';
 
-// Fecha o onboarding: o _Arranque do main.dart passa a mostrar a app.
-// popUntil fecha os ecrãs empilhados por cima (ex.: Ligar ao frigorífico).
+// ? Fecha o onboarding: o _Arranque do main.dart passa a mostrar a app.
+// ? Função fora das classes porque o Saltar e o Ligar fazem o mesmo.
+// ? popUntil fecha os ecrãs empilhados por cima (ex.: Ligar ao frigorífico).
 void irParaApp(BuildContext context) {
   frigorifico.verBoasVindas = false;
   frigorifico.atualizar();
   Navigator.popUntil(context, (rota) => rota.isFirst);
 }
 
-// Rodapé dos passos: pontos + botão principal
+// ? Rodapé dos passos: pontos + botão principal (igual nos dois ecrãs,
+// ? por isso é um widget à parte)
 class _Rodape extends StatelessWidget {
   const _Rodape({
     required this.passo,
@@ -63,6 +70,7 @@ class BoasVindas extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    // ? função local porque as 3 vantagens só mudam o ícone e o texto
     Widget vantagem(IconData icone, String texto) => Row(
       children: [
         Container(
@@ -153,8 +161,8 @@ class BoasVindas extends StatelessWidget {
 // Ecrã 16 · Ligar ao frigorífico (Wi-Fi da placa)
 // ---------------------------------------------------------------------------
 class LigarFrigorifico extends StatefulWidget {
-  // true quando se abre pelas Definições: no fim volta atrás em vez de
-  // abrir a app de novo
+  // ? true quando se abre pelas Definições: no fim volta atrás em vez de
+  // ? abrir a app de novo (o mesmo ecrã serve os dois caminhos)
   const LigarFrigorifico({super.key, this.dasDefinicoes = false});
 
   final bool dasDefinicoes;
@@ -164,12 +172,12 @@ class LigarFrigorifico extends StatefulWidget {
 }
 
 class _LigarFrigorificoState extends State<LigarFrigorifico> {
-  // redes falsas; mais tarde vêm da placa (ESP32) por Bluetooth
+  // ? redes falsas por agora; mais tarde vêm da placa (ESP32) por Bluetooth
   final List<(String, String)> _redes = [
     ('MEO-5G-Casa', 'Sinal forte'),
     ('Vodafone-2F1A', 'Sinal médio'),
   ];
-  // ↑ (String, String) = "record": dois valores juntos, lidos com .$1 e .$2
+  // ? ↑ (String, String) = "record": dois valores juntos, lidos com .$1 e .$2
 
   String _rede = 'MEO-5G-Casa';
   final _palavraPasse = TextEditingController();
@@ -177,11 +185,14 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
 
   @override
   void dispose() {
-    // os controladores têm de ser libertados quando o ecrã fecha
+    // ! os controladores têm de ser libertados quando o ecrã fecha, senão
+    // ! ficam na memória
     _palavraPasse.dispose();
     super.dispose();
   }
 
+  // ? "Outra rede…": pede o nome numa caixa de diálogo; o await espera
+  // ? até a pessoa carregar OK ou Cancelar
   Future<void> _outraRede() async {
     final controlador = TextEditingController();
     final nome = await showDialog<String>(
@@ -211,19 +222,19 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
 
   Future<void> _ligar() async {
     setState(() => _aLigar = true);
-    // mais tarde: enviar a rede e a palavra-passe à placa
+    // ? por agora finge 2 s; mais tarde envia a rede e a palavra-passe à placa
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     setState(() => _aLigar = false);
 
     if (widget.dasDefinicoes) {
-      // guarda o messenger antes de fechar: depois do pop o context
-      // deste ecrã deixa de existir
+      // ! guarda o messenger antes de fechar: depois do pop o context
+      // ! deste ecrã deixa de existir e a snackbar não aparecia
       final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
       messenger.showSnackBar(SnackBar(content: Text('Frigu ligado a $_rede')));
     } else {
-      // o passo 3 (Escolher avisos) ainda não existe: segue para a app
+      // ? o passo 3 (Escolher avisos) ainda não existe: segue para a app
       irParaApp(context);
     }
   }
@@ -255,7 +266,7 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
                     voltar: true,
                   ),
                   const SizedBox(height: AppSpacing.midsmall),
-                  // cartão "Frigu encontrado"
+                  // ? cartão "Frigu encontrado"
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.midsmall),
                     decoration: BoxDecoration(
@@ -316,9 +327,10 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
                   const SizedBox(height: AppSpacing.small),
                   TextField(
                     controller: _palavraPasse,
-                    // esconde o texto com pontos
+                    // ? esconde o texto com pontos
                     obscureText: true,
-                    // redesenha para ligar/desligar o botão Ligar
+                    // ? setState vazio só para redesenhar: o botão Ligar
+                    // ? liga-se quando a palavra-passe deixa de estar vazia
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.lock_outline),
@@ -347,7 +359,7 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
             _Rodape(
               passo: 1,
               texto: _aLigar ? 'A ligar…' : 'Ligar',
-              // null = botão desligado
+              // ? null = botão desligado (sem palavra-passe ou já a ligar)
               onPressed: _palavraPasse.text.isEmpty || _aLigar ? null : _ligar,
             ),
           ],

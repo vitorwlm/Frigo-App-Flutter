@@ -1,3 +1,9 @@
+// * ECRÃ HISTÓRICO DA TEMPERATURA (ecrã 20 do Figma). Abre pelo cartão de
+// * cima do Início ("Detalhes" / "Histórico").
+// * Fluxo: 24 h / 7 dias → gráfico com a faixa do alvo e as aberturas da
+// * porta → mínima, média, máxima → lista das aberturas e o efeito de cada.
+// * As leituras vêm do frigorifico (Supabase, ou falsas sem a placa).
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -12,17 +18,20 @@ import '../widgets/screen_header.dart';
 import '../widgets/section_title.dart';
 import '../widgets/tag_chip.dart';
 
+// ! nome diferente do Periodo do Impacto para não chocarem nos imports
 enum Periodo24 { dia, semana }
 
 const List<String> _diasSemana = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
 
+// ? "09:05": padLeft põe o 0 à esquerda
 String _hora(DateTime t) =>
     '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
+// ? aberturas curtas em segundos, as longas em minutos
 String _duracao(Duration d) =>
     d.inSeconds < 60 ? '${d.inSeconds} s' : '${d.inMinutes} min';
 
-// Ecrã 20 do Figma (abre pelo cartão de cima do Início)
+// ? StatefulWidget porque guarda o período escolhido
 class HistoricoTemperatura extends StatefulWidget {
   const HistoricoTemperatura({super.key});
 
@@ -39,15 +48,17 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
     final f = frigorifico;
     final bool dia = _periodo == Periodo24.dia;
 
-    // 24 h: de 30 em 30 min · 7 dias: de hora a hora
+    // ? 24 h: de 30 em 30 min · 7 dias: de hora a hora (pontos suficientes
+    // ? para a linha, sem encher o gráfico)
     final leituras = dia ? f.leituras(24, 30) : f.leituras(24 * 7, 60);
     final valores = [for (final l in leituras) l.$2];
     final double minimo = valores.reduce((a, b) => a < b ? a : b);
     final double maximo = valores.reduce((a, b) => a > b ? a : b);
-    // fold = soma tudo a começar em 0
+    // ? fold = soma tudo a começar em 0
     final double media = valores.fold(0.0, (s, v) => s + v) / valores.length;
 
     final DateTime desde = leituras.first.$1;
+    // ? só as aberturas dentro do período do gráfico, mais recentes primeiro
     final aberturas = f.aberturas.where((a) => !a.inicio.isBefore(desde)).toList()
       ..sort((a, b) => b.inicio.compareTo(a.inicio));
 
@@ -113,12 +124,14 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
                       alvoMax: f.alvoMax,
                       etiqueta: (t) {
                         if (dia) {
-                          // só a primeira leitura depois das 0, 6, 12 e 18 h
+                          // ? só a primeira leitura depois das 0, 6, 12 e 18 h,
+                          // ? para o eixo ter 4 etiquetas e não 48
                           return t.hour % 6 == 0 && t.minute < 30
                               ? '${t.hour.toString().padLeft(2, '0')}:00'
                               : null;
                         }
-                        // weekday: 1 = segunda … 7 = domingo
+                        // ? weekday: 1 = segunda … 7 = domingo; uma etiqueta
+                        // ? por dia (à meia-noite)
                         return t.hour == 0 ? _diasSemana[t.weekday - 1] : null;
                       },
                     ),
@@ -180,6 +193,8 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
     );
   }
 
+  // ? Cada abertura diz quanto aqueceu: > alvo+1 é perigo (vermelho), para
+  // ? a pessoa perceber que deixar a porta aberta estraga a comida
   Widget _linhaAbertura(AberturaPorta a, bool dia) {
     final f = frigorifico;
     String detalhe;
@@ -204,6 +219,7 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
   }
 }
 
+// ? quadrado de cor + texto, para explicar as cores do gráfico
 class _Legenda extends StatelessWidget {
   const _Legenda({required this.cor, required this.texto});
 
@@ -235,7 +251,7 @@ class _Legenda extends StatelessWidget {
   }
 }
 
-// Mínima / Média / Máxima
+// ? Mínima / Média / Máxima; a máxima fica vermelha se passou o alvo
 class _Resumo extends StatelessWidget {
   const _Resumo({required this.titulo, required this.valor, this.alerta = false});
 

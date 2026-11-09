@@ -1,3 +1,10 @@
+// * O CÉREBRO DA APP: todos os dados e todas as ações num só sítio.
+// * Fluxo: o main.dart chama carregar() depois do login → lê tudo do Supabase
+// * → liga o Realtime (_ouvir) → os ecrãs leem daqui e chamam os métodos
+// * (usar, deitarFora, adicionar…) → cada método muda a lista, grava no
+// * Supabase e chama notifyListeners() para os ecrãs se redesenharem.
+// * Os ecrãs nunca falam diretamente com o Supabase: passam sempre por aqui.
+
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -9,49 +16,49 @@ import '../models/item.dart';
 import '../models/receita.dart';
 import '../widgets/tag_chip.dart';
 import '../services/nuvem.dart';
-import 'dados_exemplo.dart';
 
-// Os 4 estados do cartão de cima do Início (ecrãs 01, 02, 13 e 19 do Figma)
+// ? Os 4 estados do cartão de cima do Início (ecrãs 01, 02, 13 e 19 do Figma).
+// ? enum em vez de vários bool porque só pode haver um estado de cada vez.
 enum EstadoFrigu { ok, temperaturaAlta, semLigacao, portaAberta }
 
-// 2.0 -> "2", 2.5 -> "2,5"
+// ? 2.0 -> "2", 2.5 -> "2,5": números à portuguesa (vírgula e sem ,0)
 String numeroPt(double v) => v == v.roundToDouble()
     ? v.toInt().toString()
     : v.toStringAsFixed(1).replaceAll('.', ',');
 
-// 4.2 -> "4,2 °C"
+// ? 4.2 -> "4,2 °C"
 String graus(double v) => '${v.toStringAsFixed(1).replaceAll('.', ',')} °C';
 
-// Os dados da app num só sítio, partilhados por todos os ecrãs.
-// ChangeNotifier: quando algo muda, chama notifyListeners() e os ecrãs
-// que estão a ouvir (ListenableBuilder ou addListener) redesenham-se.
-// Mais tarde, estes métodos passam a ler e escrever no Supabase.
+// ? Usei ChangeNotifier (e não setState em cada ecrã) porque vários ecrãs
+// ? mostram os mesmos dados: quando algo muda, notifyListeners() avisa todos
+// ? os que estão a ouvir (ListenableBuilder ou addListener) e redesenham-se.
 class Frigorifico extends ChangeNotifier {
-  final List<Item> itens = itensExemplo();
-  final List<Receita> receitas = receitasExemplo();
+  // ? começam vazios: enchem-se com o Supabase no carregar()
+  // ? (final = a lista é sempre a mesma, só muda o conteúdo)
+  final List<Item> itens = [];
+  final List<Receita> receitas = [];
+  // ? dias até expirar por categoria (tabela validades): 'ovos' → 21
+  final Map<String, int> validades = {};
+  // ? eventos, alertas e compras começam com exemplos para os ecrãs Impacto,
+  // ? Avisos e Compras não aparecerem vazios antes de haver dados reais
   final List<Evento> eventos = _eventosExemplo();
   final List<AlertaSensor> alertas = _alertasExemplo();
-  final List<Compra> compras = [
-    Compra(nome: 'Manteiga', motivo: 'Acabou no frigorífico'),
-    Compra(nome: 'Farinha', motivo: 'Para as panquecas', tom: TagTom.marca),
-    Compra(
-      nome: 'Iogurte natural ×2',
-      motivo: 'Pack mais pequeno',
-      tom: TagTom.aviso,
-    ),
-    Compra(nome: 'Tomates', motivo: 'Acabou no frigorífico', noCarrinho: true),
-  ];
+  final List<Compra> compras = _comprasExemplo();
+  // ? ids para itens criados sem Supabase (modo de exemplo)
   int _proximoId = 100;
 
-  // ---- sensores (falsos até a ESP32 enviar leituras para o Supabase) ----
+  // * ---- sensores (falsos até a ESP32 enviar leituras para o Supabase) ----
   double temperatura = 4.2;
   int humidade = 62;
   bool ligado = true;
-  // null = porta fechada
+  // ? DateTime? e não bool: null = porta fechada; com data, sabe-se há
+  // ? quanto tempo está aberta (o Início mostra os minutos)
   DateTime? portaAbertaDesde;
   DateTime ultimaLeitura = DateTime.now().subtract(const Duration(minutes: 2));
   final List<AberturaPorta> aberturas = _aberturasExemplo();
 
+  // ? get porque o estado é calculado a partir dos sensores, não se guarda.
+  // ? A ordem dos if é a prioridade: sem ligação > porta > temperatura
   EstadoFrigu get estado {
     if (!ligado) return EstadoFrigu.semLigacao;
     if (portaAbertaDesde != null) return EstadoFrigu.portaAberta;
@@ -59,11 +66,11 @@ class Frigorifico extends ChangeNotifier {
     return EstadoFrigu.ok;
   }
 
-  // ---- definições (ecrã 14) ----
-  // avisar quantos dias antes de expirar (1, 2 ou 3)
+  // * ---- definições (ecrã 14) ----
+  // * avisar quantos dias antes de expirar (1, 2 ou 3)
   int diasAviso = 2;
   bool resumoDiario = true;
-  // temperatura-alvo em °C
+  // ? temperatura-alvo em °C
   double alvoMin = 2;
   double alvoMax = 5;
 
@@ -71,14 +78,16 @@ class Frigorifico extends ChangeNotifier {
     _sincronizarReceitas();
   }
 
-  // sempre que algo muda, as receitas passam a saber o que há em casa
+  // ? Faço override do notifyListeners para que, antes de qualquer ecrã se
+  // ? redesenhar, as receitas fiquem a saber o que há em casa
   @override
   void notifyListeners() {
     _sincronizarReceitas();
     super.notifyListeners();
   }
 
-  // copia do inventário para cada ingrediente: quanto há e quando expira
+  // ? copia do inventário para cada ingrediente: quanto há e quando expira
+  // ? (assim a Receita consegue dizer "tens tudo" sem conhecer o inventário)
   void _sincronizarReceitas() {
     for (final r in receitas) {
       for (final ing in r.ingredientes) {
@@ -94,35 +103,42 @@ class Frigorifico extends ChangeNotifier {
     }
   }
 
-  // chama-se depois de mudar um item à mão (ex.: no ecrã de detalhe)
+  // ? chama-se depois de mudar um item à mão (ex.: no ecrã de detalhe):
+  // ? grava-o e avisa os ecrãs
   void atualizar([Item? item]) {
     if (item != null) _guardar(item);
     notifyListeners();
   }
 
-  // ---- leituras ----
+  // * ---- leituras (listas que os ecrãs mostram) ----
 
   List<Item> get noFrigorifico =>
       itens.where((i) => i.local == Local.frigorifico).toList();
 
-  // o que expira em 4 dias ou menos, do mais urgente para o menos
+  // ? o que expira em 4 dias ou menos, do mais urgente para o menos
+  // ? (cartão "A expirar" do Início)
   List<Item> get aExpirar =>
       noFrigorifico.where((i) => i.dias <= 4).toList()
         ..sort((a, b) => a.dias.compareTo(b.dias));
 
   int get totalEmCasa => itens.where((i) => i.local != Local.acabou).length;
 
-  // a melhor receita para hoje: tens tudo e salva mais alimentos a expirar
-  Receita get receitaDoDia {
+  // ? A melhor receita para hoje (ODS 12.3): tens tudo e aproveita mais
+  // ? alimentos a expirar. null quando ainda não há receitas na base de dados
+  Receita? get receitaDoDia {
+    if (receitas.isEmpty) return null;
     final candidatas = receitas.where((r) => r.tensTudo(r.pessoasBase)).toList()
       ..sort((a, b) => b.salva.compareTo(a.salva));
     return candidatas.isNotEmpty ? candidatas.first : receitas.first;
   }
 
-  // ---- ações sobre os alimentos ----
+  // * ---- ações sobre os alimentos ----
+  // * Todas seguem o mesmo fluxo: muda o item → _guardar (Supabase) →
+  // * regista um Evento (para o Impacto) → notifyListeners (ecrãs)
 
   void usar(Item item, {int? quantidade}) {
-    // por defeito: 1 unidade, ou tudo se for em gramas/litros
+    // ? por defeito: 1 unidade, ou tudo se for em gramas/litros
+    // ? (ninguém conta 200 g de espinafres um a um)
     int q = quantidade ?? (item.porUnidade ? 1 : item.quantidade);
     if (q > item.quantidade) q = item.quantidade;
     item.quantidade -= q;
@@ -161,7 +177,8 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // botão Anular: volta ao que estava e apaga o último registo deste item
+  // ? botão Anular da snackbar: volta ao que estava e apaga o último registo
+  // ? deste item, para o Impacto não contar uma ação que foi desfeita
   void repor(Item item, int quantidade, Local local) {
     item.quantidade = quantidade;
     item.local = local;
@@ -172,6 +189,8 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ? Chamado pelo ecrã Adicionar. Future porque espera pelo Supabase para
+  // ? ter o id verdadeiro do item novo
   Future<void> adicionar({
     required String nome,
     required int quantidade,
@@ -181,7 +200,8 @@ class Frigorifico extends ChangeNotifier {
   }) async {
     final hoje = DateUtils.dateOnly(DateTime.now());
     if (naNuvem) {
-      // insert(...).select().single() devolve a linha criada, com o id
+      // ? insert(...).select().single() porque preciso da linha criada, com o
+      // ? id que o Supabase lhe deu (sem o id não dava para a mudar depois)
       final rascunho = Item(
         id: '0',
         nome: nome,
@@ -198,7 +218,7 @@ class Frigorifico extends ChangeNotifier {
             .select()
             .single();
         final novo = itemDaLinha(linha);
-        // o Realtime pode já o ter trazido
+        // ? o Realtime pode já o ter trazido: assim não fica repetido
         if (!itens.any((i) => i.id == novo.id)) itens.add(novo);
       } catch (e) {
         _erro(e);
@@ -206,6 +226,7 @@ class Frigorifico extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    // ? sem Supabase (exemplo): só fica na memória do telemóvel
     itens.add(Item(
       id: '${_proximoId++}',
       nome: nome,
@@ -218,7 +239,8 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // tira do inventário o que a receita usa (procura pelo início do nome)
+  // ? Botão "Cozinhei" das Receitas: tira do inventário o que a receita usa.
+  // ? Ordena por dias para gastar primeiro o que expira mais cedo (ODS 12.3)
   void cozinhar(Receita r, int pessoas) {
     for (final ing in r.ingredientes) {
       if (ing.despensa) continue;
@@ -231,7 +253,8 @@ class Frigorifico extends ChangeNotifier {
     }
   }
 
-  // ---- confirmar o que a câmara viu (ecrã 12) ----
+  // * ---- confirmar o que a câmara viu (ecrã 12) ----
+  // * O Gemini pode enganar-se: a certeza passa a 100 quando a pessoa confirma
 
   void confirmar(Item item, String nome) {
     item.nome = nome;
@@ -240,12 +263,14 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // "Não está no frigorífico": tira o item e devolve a posição, para o Anular
+  // ? "Não está no frigorífico": tira o item e devolve a posição, para o
+  // ? Anular o conseguir pôr outra vez no mesmo sítio da lista
   int remover(Item item) {
     final int i = itens.indexOf(item);
     itens.remove(item);
     if (naNuvem) {
-      // na base de dados fica com quantidade 0, sem motivo (não foi usado)
+      // ! Não apago a linha: fica com quantidade 0 e sem motivo, porque não
+      // ! foi usado nem deitado fora (a câmara enganou-se) e não conta no Impacto
       supabase
           .from('itens')
           .update({
@@ -266,9 +291,12 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- estados do Início ----
+  // * ---- estados do Início ----
+  // * Enquanto a placa não envia dados, estes métodos fingem os sensores
+  // * para dar para mostrar e testar os 4 estados do cartão do Início
 
-  // Muda os sensores para mostrar um estado (secção Demonstração das Definições)
+  // ? Muda os sensores para mostrar um estado (secção Demonstração das
+  // ? Definições), útil para a apresentação sem o frigorífico ligado
   void simular(EstadoFrigu e) {
     ligado = e != EstadoFrigu.semLigacao;
     portaAbertaDesde = e == EstadoFrigu.portaAberta
@@ -285,7 +313,7 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // "Já fechei a porta": a temperatura volta a descer
+  // ? "Já fechei a porta": a temperatura volta a descer
   void fecharPorta() {
     portaAbertaDesde = null;
     temperatura = 4.8;
@@ -293,7 +321,7 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // "Tentar ligar de novo": espera pela placa (aqui, 2 s a fingir)
+  // ? "Tentar ligar de novo": espera pela placa (por agora, 2 s a fingir)
   Future<void> reconectar() async {
     await Future.delayed(const Duration(seconds: 2));
     ligado = true;
@@ -301,8 +329,9 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Temperatura num momento: base que sobe e desce um pouco ao longo do dia
-  // + o pico de cada abertura da porta, que desce ao longo de ~1 h
+  // ? Temperatura falsa, só usada sem leituras reais: uma base que sobe e
+  // ? desce ao longo do dia (sin) + o pico de cada abertura da porta, que
+  // ? desce ao longo de ~1 h (exp), para o gráfico parecer verdadeiro
   double temperaturaEm(DateTime t) {
     double v = 3.9 + 0.3 * sin(t.hour / 24 * 2 * pi);
     for (final a in aberturas) {
@@ -312,11 +341,13 @@ class Frigorifico extends ChangeNotifier {
     return v;
   }
 
-  // Leituras de [horas] para trás até agora, uma a cada [passo] minutos
+  // ? Leituras de [horas] para trás até agora, uma a cada [passo] minutos.
+  // ? Usado pelo gráfico do Histórico da temperatura
   List<(DateTime, double)> leituras(int horas, int passo) {
     final reais = _resumos['$horas/$passo'];
     if (temLeiturasReais && reais != null && reais.isNotEmpty) {
-      // médias do Supabase + o valor de agora no fim
+      // ? médias do Supabase + o valor de agora no fim, para a linha do
+      // ? gráfico acabar no mesmo número que aparece no cartão
       return [...reais, (DateTime.now(), temperatura)];
     }
     final agora = DateTime.now();
@@ -325,12 +356,12 @@ class Frigorifico extends ChangeNotifier {
       final t = agora.subtract(Duration(minutes: m));
       lista.add((t, temperaturaEm(t)));
     }
-    // a última é o valor de agora
+    // ? a última é o valor de agora (igual ao cartão do Início)
     lista.add((agora, temperatura));
     return lista;
   }
 
-  // ---- editar um alimento (detalhe) ----
+  // * ---- editar um alimento (botão Editar do detalhe) ----
 
   void editar(Item item, {
     required String nome,
@@ -344,26 +375,35 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---- Supabase ----
+  // * ---- Supabase ----
+  // * Estado da ligação e do utilizador; preenchidos no carregar()
 
   String nomeUtilizador = '';
   String email = '';
   bool eAdmin = false;
-  // true depois de carregar o inventário do Supabase: só então se escreve lá
+  // ! true depois de carregar o inventário do Supabase: só então se escreve
+  // ! lá, para os dados de exemplo nunca irem parar à base de dados
   bool naNuvem = false;
+  // ? false enquanto a placa não enviou nenhuma leitura: ficam os sensores
+  // ? falsos
   bool temLeiturasReais = false;
   String? erroNuvem;
-  // mostra as Boas-vindas a seguir a criar conta
+  // ? mostra as Boas-vindas a seguir a criar conta (o main.dart ouve isto)
   bool verBoasVindas = false;
+  // ? médias do gráfico guardadas por "horas/passo" ('24/30', '168/60')
+  // ? para não as pedir outra vez ao trocar entre 24 h e 7 dias
   final Map<String, List<(DateTime, double)>> _resumos = {};
   RealtimeChannel? _canal;
 
+  // ? Um só sítio para os erros: guarda o último (as Definições mostram-no)
+  // ? e escreve-o na consola para eu ver ao testar
   void _erro(Object e) {
     erroNuvem = e.toString();
     debugPrint('Supabase: $e');
   }
 
-  // grava as colunas do item; sem esperar pela resposta (a app não fica parada)
+  // ! Grava as colunas do item sem await, de propósito: a app muda logo e
+  // ! não fica parada à espera da internet; se falhar, só regista o erro
   void _guardar(Item item) {
     if (!naNuvem) return;
     supabase
@@ -373,13 +413,16 @@ class Frigorifico extends ChangeNotifier {
         .then((_) {}, onError: (Object e) => _erro(e));
   }
 
-  // Lê tudo do Supabase a seguir ao login
+  // * 1.º passo depois do login (chamado pelo _Arranque do main.dart):
+  // * perfil → inventário → temperatura-alvo → receitas → validades →
+  // * compras → sensores → liga o Realtime
   Future<void> carregar() async {
     final user = supabase.auth.currentUser;
     if (user == null) return;
     email = user.email ?? '';
     try {
-      // perfil (criado pelo trigger ao registar)
+      // ! perfil (criado pelo trigger ao registar); maybeSingle porque
+      // ! pode ainda não existir e assim não dá erro
       final perfil = await supabase
           .from('perfis')
           .select('nome, role')
@@ -390,7 +433,8 @@ class Frigorifico extends ChangeNotifier {
           email.split('@').first;
       eAdmin = perfil?['role'] == 'admin';
 
-      // inventário: o que está em casa + o que acabou nos últimos 30 dias
+      // ? inventário: o que está em casa + o que acabou nos últimos 30 dias
+      // ? (os que acabaram servem para os Avisos e o separador Acabou)
       final mes = DateTime.now().subtract(const Duration(days: 30)).toUtc();
       final linhas = await supabase
           .from('itens')
@@ -402,6 +446,7 @@ class Frigorifico extends ChangeNotifier {
         ..addAll(linhas.map(itemDaLinha));
       naNuvem = true;
 
+      // ? temperatura-alvo da placa (a mesma que o termóstato da ESP32 usa)
       final conf = await supabase
           .from('configuracao')
           .select('valor')
@@ -411,6 +456,9 @@ class Frigorifico extends ChangeNotifier {
         alvoMax = double.tryParse(conf['valor'] as String) ?? alvoMax;
       }
 
+      await _carregarReceitas();
+      await _carregarValidades();
+      await _carregarCompras();
       await _carregarSensores();
       _ouvir();
       erroNuvem = null;
@@ -420,6 +468,48 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ? receitas (tabela receitas, esquema_receitas.sql)
+  // ? try próprio: se esta tabela falhar, o resto da app continua a carregar
+  Future<void> _carregarReceitas() async {
+    try {
+      final linhas = await supabase.from('receitas').select().order('titulo');
+      receitas
+        ..clear()
+        ..addAll(linhas.map(receitaDaLinha));
+    } catch (e) {
+      _erro(e);
+    }
+  }
+
+  // ? dias por categoria (tabela validades, esquema_fase4.sql)
+  Future<void> _carregarValidades() async {
+    try {
+      final linhas =
+          await supabase.from('validades').select().order('categoria');
+      validades.clear();
+      for (final l in linhas) {
+        validades[l['categoria'] as String] = l['dias'] as int;
+      }
+    } catch (e) {
+      _erro(e);
+    }
+  }
+
+  // ? lista de compras partilhada (tabela compras, esquema_compras.sql)
+  Future<void> _carregarCompras() async {
+    try {
+      final linhas = await supabase.from('compras').select().order('criada_em');
+      compras
+        ..clear()
+        ..addAll(linhas.map(compraDaLinha));
+    } catch (e) {
+      // ? sem a tabela (SQL ainda não corrido): fica a lista de exemplo
+      // ? em vez de a app deixar de abrir
+      _erro(e);
+    }
+  }
+
+  // ? Última leitura + médias do gráfico + eventos da porta da última semana
   Future<void> _carregarSensores() async {
     final ultima = await supabase
         .from('leituras')
@@ -427,7 +517,8 @@ class Frigorifico extends ChangeNotifier {
         .order('medido_em', ascending: false)
         .limit(1)
         .maybeSingle();
-    // sem leituras (placa ainda não ligada): ficam os sensores falsos
+    // ? sem leituras (placa ainda não ligada): ficam os sensores falsos
+    // ? para os ecrãs terem o que mostrar
     if (ultima == null) return;
     temLeiturasReais = true;
     _aplicarLeitura(ultima);
@@ -449,7 +540,9 @@ class Frigorifico extends ChangeNotifier {
     }
   }
 
-  // médias por intervalo (função leituras_resumo do esquema_app.sql)
+  // ? Médias por intervalo (função leituras_resumo do esquema_app.sql).
+  // ? Uso rpc em vez de ler a tabela toda porque são 2880 leituras por dia:
+  // ? o Supabase faz as médias e só manda ~48 pontos para o gráfico
   Future<void> carregarLeituras(int horas, int passo) async {
     final desde = DateTime.now().subtract(Duration(hours: horas)).toUtc();
     try {
@@ -473,10 +566,13 @@ class Frigorifico extends ChangeNotifier {
     temperatura = (l['temperatura'] as num).toDouble();
     humidade = (l['humidade'] as num).round();
     ultimaLeitura = DateTime.parse(l['medido_em'] as String).toLocal();
-    // a placa manda a cada 30 s: 10 min sem nada = sem ligação
+    // ? a placa manda a cada 30 s: 10 min sem nada = sem ligação
+    // ? (dá margem para falhas curtas do Wi-Fi sem assustar a pessoa)
     ligado = DateTime.now().difference(ultimaLeitura).inMinutes < 10;
   }
 
+  // ? Um evento da porta muda o cartão do Início (porta aberta) ou entra no
+  // ? gráfico como abertura; acima de 60 s também vira um aviso
   void _aplicarEvento(Map<String, dynamic> e) {
     final t = DateTime.parse(e['ocorreu_em'] as String).toLocal();
     if (e['tipo'] == 'porta_aberta') {
@@ -486,7 +582,8 @@ class Frigorifico extends ChangeNotifier {
     portaAbertaDesde = null;
     final dur = Duration(seconds: (e['duracao_s'] as int?) ?? 0);
     final inicio = t.subtract(dur);
-    // temperatura mais alta na hora seguinte (das médias de 30 min)
+    // ? temperatura mais alta na hora seguinte (das médias de 30 min),
+    // ? para o gráfico mostrar quanto aqueceu com aquela abertura
     double maxT = temperatura;
     final dia = _resumos['24/30'] ?? [];
     final perto = dia.where((l) =>
@@ -505,9 +602,11 @@ class Frigorifico extends ChangeNotifier {
     }
   }
 
-  // Realtime: a app atualiza-se sozinha quando a placa ou outro telemóvel
-  // mudam alguma coisa
+  // ? Realtime: a app atualiza-se sozinha quando a placa ou outro telemóvel
+  // ? mudam alguma coisa. Um só canal para as 6 tabelas, em vez de um por
+  // ? tabela, para ter uma só ligação aberta
   void _ouvir() {
+    // ! fecha o canal antigo para não receber tudo a dobrar
     _canal?.unsubscribe();
     _canal = supabase
         .channel('frigu')
@@ -536,6 +635,26 @@ class Frigorifico extends ChangeNotifier {
           table: 'itens',
           callback: _aplicarItem,
         )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'compras',
+          callback: _aplicarCompra,
+        )
+        // ? o admin mudou receitas ou validades: volta a ler tudo (são poucas
+        // ? linhas, é mais simples do que atualizar uma a uma)
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'receitas',
+          callback: (_) => _carregarReceitas().then((_) => notifyListeners()),
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'validades',
+          callback: (_) => _carregarValidades().then((_) => notifyListeners()),
+        )
         .subscribe();
   }
 
@@ -548,8 +667,8 @@ class Frigorifico extends ChangeNotifier {
       if (i == -1) {
         itens.add(novo);
       } else {
-        // muda o objeto que já existe: os ecrãs abertos continuam a apontar
-        // para ele
+        // ? Muda o objeto que já existe em vez de o trocar, porque os ecrãs
+        // ? abertos (ex.: o detalhe) continuam a apontar para ele
         final velho = itens[i]
           ..nome = novo.nome
           ..quantidade = novo.quantidade
@@ -565,12 +684,29 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Põe os alimentos de exemplo no Supabase (Demonstração nas Definições)
+  // ? outro telemóvel mudou a lista de compras (lista partilhada)
+  void _aplicarCompra(PostgresChangePayload p) {
+    if (p.eventType == PostgresChangeEvent.delete) {
+      compras.removeWhere((c) => c.id == '${p.oldRecord['id']}');
+    } else {
+      final nova = compraDaLinha(p.newRecord);
+      final i = compras.indexWhere((c) => c.id == nova.id);
+      if (i == -1) {
+        compras.add(nova);
+      } else {
+        compras[i].noCarrinho = nova.noCarrinho;
+      }
+    }
+    notifyListeners();
+  }
+
+  // ? Põe os alimentos de exemplo no Supabase (Demonstração nas Definições),
+  // ? para testar e apresentar a app sem ter de adicionar tudo à mão
   Future<String> enviarExemplos() async {
     if (!naNuvem) return 'Entra primeiro na tua conta.';
     try {
       await supabase.from('itens').insert([
-        for (final i in itensExemplo()) {...linhaDoItem(i), 'origem': 'manual'},
+        for (final i in _alimentosDemo()) {...linhaDoItem(i), 'origem': 'manual'},
       ]);
       await carregar();
       return 'Alimentos de exemplo adicionados';
@@ -580,23 +716,28 @@ class Frigorifico extends ChangeNotifier {
     }
   }
 
+  // ? Botão Sair das Definições. Depois do signOut, o _PortaoLogin do
+  // ? main.dart vê que não há sessão e volta ao Login sozinho
   Future<void> sair() async {
     await _canal?.unsubscribe();
     _canal = null;
     await supabase.auth.signOut();
-    // volta aos dados falsos até alguém entrar de novo
+    // ? limpa tudo para a próxima conta não ver os dados desta
     naNuvem = false;
     temLeiturasReais = false;
     _resumos.clear();
-    itens
+    itens.clear();
+    receitas.clear();
+    validades.clear();
+    compras
       ..clear()
-      ..addAll(itensExemplo());
+      ..addAll(_comprasExemplo());
     nomeUtilizador = '';
     eAdmin = false;
     notifyListeners();
   }
 
-  // ---- definições ----
+  // * ---- definições ----
 
   void mudarDiasAviso(int dias) {
     diasAviso = dias;
@@ -608,20 +749,23 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Devolve uma mensagem de erro, ou null se correu bem
+  // ? Devolve uma mensagem de erro, ou null se correu bem (o ecrã das
+  // ? Definições mostra-a numa snackbar)
   Future<String?> mudarAlvo(double min, double max) async {
     alvoMin = min;
     alvoMax = max;
     notifyListeners();
     if (!naNuvem) return null;
     try {
-      // a placa só lê o máximo (temp_alvo), o termóstato liga acima dele
+      // ? só envio o máximo (temp_alvo) porque é o único valor que a placa
+      // ? lê: o termóstato liga a ventoinha acima dele
       final mudadas = await supabase
           .from('configuracao')
           .update({'valor': numeroPt(max).replaceAll(',', '.')})
           .eq('chave', 'temp_alvo')
           .select();
-      // o RLS não dá erro: simplesmente não muda nenhuma linha
+      // ! .select() porque o RLS não dá erro: simplesmente não muda nenhuma
+      // ! linha; uma lista vazia quer dizer que não és admin
       if (mudadas.isEmpty) {
         return 'Só o administrador pode mudar a temperatura da placa.';
       }
@@ -632,32 +776,150 @@ class Frigorifico extends ChangeNotifier {
     }
   }
 
-  // ---- compras ----
+  // * ---- administração (ecrã Admin) ----
+  // * Devolvem null se correu bem, ou a mensagem de erro para mostrar.
+  // * Só o admin escreve em receitas e validades (RLS do esquema_fase4.sql):
+  // * a segurança está no Supabase, não só em esconder o ecrã.
+
+  // ? id vazio = receita nova (insert); senão muda a que existe (update).
+  // ? Um só método para os dois casos porque o ecrã Editar receita é o mesmo
+  Future<String?> guardarReceita(Receita r) async {
+    try {
+      if (r.id.isEmpty) {
+        await supabase.from('receitas').insert(linhaDaReceita(r));
+      } else {
+        // ! .select() devolve as linhas mudadas: vazio = o RLS não deixou
+        // ! (o update sozinho não dava erro e eu não saberia)
+        final mudadas = await supabase
+            .from('receitas')
+            .update(linhaDaReceita(r))
+            .eq('id', int.parse(r.id))
+            .select('id');
+        if (mudadas.isEmpty) return 'Só o administrador pode mudar receitas.';
+      }
+      await _carregarReceitas();
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _erro(e);
+      return 'Não foi possível guardar: ${erroEmPortugues(e)}';
+    }
+  }
+
+  // ! .select('id') pela mesma razão: saber se o RLS deixou apagar
+  Future<String?> apagarReceita(Receita r) async {
+    try {
+      final apagadas = await supabase
+          .from('receitas')
+          .delete()
+          .eq('id', int.parse(r.id))
+          .select('id');
+      if (apagadas.isEmpty) return 'Só o administrador pode apagar receitas.';
+      receitas.removeWhere((x) => x.id == r.id);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _erro(e);
+      return 'Não foi possível apagar: ${erroEmPortugues(e)}';
+    }
+  }
+
+  // ? upsert = insert, ou update se a categoria já existir: o mesmo botão
+  // ? Guardar serve para criar e para mudar
+  Future<String?> guardarValidade(String categoria, int dias) async {
+    try {
+      await supabase
+          .from('validades')
+          .upsert({'categoria': categoria, 'dias': dias});
+      validades[categoria] = dias;
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _erro(e);
+      return 'Não foi possível guardar: ${erroEmPortugues(e)}';
+    }
+  }
+
+  // ? Os itens desta categoria ficam sem categoria (on delete set null na
+  // ? base de dados), por isso apagar não apaga alimentos
+  Future<String?> apagarValidade(String categoria) async {
+    try {
+      final apagadas = await supabase
+          .from('validades')
+          .delete()
+          .eq('categoria', categoria)
+          .select('categoria');
+      if (apagadas.isEmpty) return 'Só o administrador pode apagar categorias.';
+      validades.remove(categoria);
+      notifyListeners();
+      return null;
+    } catch (e) {
+      _erro(e);
+      return 'Não foi possível apagar: ${erroEmPortugues(e)}';
+    }
+  }
+
+  // * ---- compras ----
+  // * A app muda a lista logo (não fica à espera) e grava no Supabase por trás,
+  // * porque no supermercado a internet pode ser fraca e a lista tem de reagir.
 
   void adicionarCompra(String nome, String motivo, {TagTom tom = TagTom.neutro}) {
-    // não repete o que já está por comprar
+    // ? não repete o que já está por comprar (o mesmo item pode ser pedido
+    // ? pelo Inventário e pelas Receitas)
     final existe = compras.any(
       (c) => !c.noCarrinho && c.nome.toLowerCase() == nome.toLowerCase(),
     );
     if (existe) return;
-    compras.add(Compra(nome: nome, motivo: motivo, tom: tom));
+    final nova = Compra(nome: nome, motivo: motivo, tom: tom);
+    compras.add(nova);
     notifyListeners();
+    if (!naNuvem) return;
+    supabase
+        .from('compras')
+        .insert(linhaDaCompra(nova))
+        .select('id')
+        .single()
+        .then((l) {
+          nova.id = '${l['id']}';
+          // ? o Realtime pode já a ter trazido: fica só uma
+          compras.removeWhere((c) => c != nova && c.id == nova.id);
+          notifyListeners();
+        }, onError: (Object e) => _erro(e));
   }
 
   void alternarCarrinho(Compra c) {
     c.noCarrinho = !c.noCarrinho;
     notifyListeners();
+    if (!naNuvem || c.id == null) return;
+    supabase
+        .from('compras')
+        .update({'no_carrinho': c.noCarrinho})
+        .eq('id', int.parse(c.id!))
+        .then((_) {}, onError: (Object e) => _erro(e));
   }
 
   void limparCarrinho() {
+    // ? apaga pelos ids (e não por no_carrinho = true), para não levar
+    // ? algo que outra pessoa acabou de marcar
+    final ids = [
+      for (final c in compras)
+        if (c.noCarrinho && c.id != null) int.parse(c.id!),
+    ];
     compras.removeWhere((c) => c.noCarrinho);
     notifyListeners();
+    if (!naNuvem || ids.isEmpty) return;
+    supabase
+        .from('compras')
+        .delete()
+        .inFilter('id', ids)
+        .then((_) {}, onError: (Object e) => _erro(e));
   }
 }
 
-// O ingrediente corresponde ao item se partilharem uma palavra com 4+ letras
-// ("caixa de sobras de arroz" ↔ "Sobras de arroz"); palavras curtas
-// ("ovo") comparam com o início do nome ("Ovos").
+// ? Fora da classe porque não depende dos dados e os testes usam-na sozinha.
+// ? O ingrediente corresponde ao item se partilharem uma palavra com 4+ letras
+// ? ("caixa de sobras de arroz" ↔ "Sobras de arroz"); palavras curtas
+// ? ("ovo") comparam com o início do nome ("Ovos").
 bool ingredienteCorresponde(Ingrediente ing, Item item) {
   final nomeItem = item.nome.toLowerCase();
   final palavras =
@@ -666,10 +928,38 @@ bool ingredienteCorresponde(Ingrediente ing, Item item) {
   return palavras.any((p) => nomeItem.contains(p));
 }
 
-// uma só instância para a app toda
+// ? Uma só instância para a app toda: todos os ecrãs importam este
+// ? "frigorifico" e veem os mesmos dados
 final Frigorifico frigorifico = Frigorifico();
 
-// Aberturas da porta falsas (relativas a agora, para caberem nas 24 h)
+// ? Alimentos do botão "Pôr alimentos de exemplo" (Demonstração nas Definições).
+// ? Função (e não const) porque as validades dependem do dia de hoje.
+List<Item> _alimentosDemo() {
+  final hoje = DateUtils.dateOnly(DateTime.now());
+  DateTime daqui(int dias) => hoje.add(Duration(days: dias));
+  return [
+    Item(id: '0', nome: 'Iogurte natural', quantidade: 2, unidade: 'unidades', validade: daqui(0), entrada: hoje, aberto: true, categoria: 'Laticínios', prateleira: 'Prateleira de cima'),
+    Item(id: '0', nome: 'Ovos', quantidade: 6, unidade: 'unidades', validade: daqui(1), entrada: hoje, categoria: 'Ovos'),
+    Item(id: '0', nome: 'Sobras de arroz', quantidade: 1, unidade: 'caixa', validade: daqui(2), entrada: hoje, categoria: 'Sobras'),
+    Item(id: '0', nome: 'Espinafres', quantidade: 200, unidade: 'g', validade: daqui(4), entrada: hoje, categoria: 'Legumes', prateleira: 'Gaveta'),
+    Item(id: '0', nome: 'Queijo fresco', quantidade: 1, unidade: 'unidades', validade: daqui(6), entrada: hoje, categoria: 'Laticínios'),
+    Item(id: '0', nome: 'Leite meio-gordo', quantidade: 1, unidade: 'L', validade: daqui(9), entrada: hoje, aberto: true, categoria: 'Laticínios', prateleira: 'Porta'),
+    Item(id: '0', nome: 'Fiambre', quantidade: 150, unidade: 'g', validade: daqui(5), entrada: hoje, categoria: 'Carne e peixe'),
+    Item(id: '0', nome: 'Iogurte grego', quantidade: 1, unidade: 'unidades', validade: daqui(12), entrada: hoje, categoria: 'Laticínios', prateleira: 'Prateleira de cima', certeza: 54),
+  ];
+}
+
+// ? Lista de compras de exemplo (antes de entrar na conta ou se a tabela
+// ? compras ainda não existir)
+List<Compra> _comprasExemplo() => [
+  Compra(nome: 'Manteiga', motivo: 'Acabou no frigorífico'),
+  Compra(nome: 'Farinha', motivo: 'Para as panquecas', tom: TagTom.marca),
+  Compra(nome: 'Iogurte natural ×2', motivo: 'Pack mais pequeno', tom: TagTom.aviso),
+  Compra(nome: 'Tomates', motivo: 'Acabou no frigorífico', noCarrinho: true),
+];
+
+// ? Aberturas da porta falsas, relativas a agora para caberem sempre nas
+// ? últimas 24 h do gráfico, seja a que horas for
 List<AberturaPorta> _aberturasExemplo() {
   final agora = DateTime.now();
   AberturaPorta a(int minAtras, int seg, double max) => AberturaPorta(
@@ -681,16 +971,16 @@ List<AberturaPorta> _aberturasExemplo() {
     a(160, 240, 7.4),
     a(330, 40, 4.3),
     a(640, 60, 5.3),
-    // dias anteriores (só aparecem em 7 dias)
+    // ? dias anteriores (só aparecem em 7 dias)
     a(60 * 30, 90, 5.0),
     a(60 * 52, 30, 4.2),
     a(60 * 100, 300, 6.8),
   ];
 }
 
-// Avisos falsos dos sensores
+// ? Avisos falsos dos sensores (até a placa enviar eventos)
 List<AlertaSensor> _alertasExemplo() {
-  // a mesma abertura de 4 min das _aberturasExemplo
+  // ? a mesma abertura de 4 min das _aberturasExemplo
   return [
     AlertaSensor(
       titulo: 'Porta mal fechada',
@@ -700,7 +990,8 @@ List<AlertaSensor> _alertasExemplo() {
   ];
 }
 
-// Histórico falso para o ecrã Impacto não começar vazio
+// ? Histórico falso para o ecrã Impacto não começar vazio (os gráficos do
+// ? mês precisam de dados para se perceber a ideia)
 List<Evento> _eventosExemplo() {
   final agora = DateTime.now();
   final lista = <Evento>[];
@@ -711,8 +1002,8 @@ List<Evento> _eventosExemplo() {
         itemId: 'h$mesAtras-$i',
         nome: 'Exemplo',
         tipo: TipoEvento.usado,
-        // DateTime corrige sozinho o mês 0 para dezembro do ano anterior
-        // no mês atual, só até hoje (nada no futuro)
+        // ? DateTime corrige sozinho o mês 0 para dezembro do ano anterior;
+        // ? no mês atual, os dias vão só até hoje (nada no futuro)
         data: DateTime(
           agora.year,
           agora.month - mesAtras,
@@ -738,7 +1029,7 @@ List<Evento> _eventosExemplo() {
     ));
   }
 
-  // ontem: fiambre usado a tempo (aparece nos Avisos)
+  // ? ontem: fiambre usado a tempo (aparece nos Avisos)
   lista.add(Evento(
     itemId: '7',
     nome: 'Fiambre',
@@ -747,14 +1038,14 @@ List<Evento> _eventosExemplo() {
     pesoKg: 0.05,
   ));
 
-  // este mês: 37 usados, 5 deitados fora (88 %)
+  // ? este mês: 37 usados, 5 deitados fora (88 %)
   usados(37, 0);
   fora('Iogurte natural', 'Passou a validade', 0, 0);
   fora('Iogurte natural', 'Passou a validade', 0, 1);
   fora('Iogurte natural', 'Comprei a mais', 0, 2);
   fora('Fiambre', 'Passou a validade', 0, 3);
   fora('Alface', 'Estragou-se antes', 0, 4);
-  // mês passado: 30 usados, 5 deitados fora (86 %)
+  // ? mês passado: 30 usados, 5 deitados fora (86 %)
   usados(30, 1);
   for (int n = 0; n < 5; n++) {
     fora('Iogurte natural', 'Passou a validade', 1, n);

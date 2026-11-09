@@ -16,7 +16,10 @@ import '../widgets/small_widgets.dart';
 import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
 
-// Ecrãs 08 e 23 do Figma: o mesmo ecrã, muda só o número de pessoas
+// * ECRÃ DETALHE DA RECEITA (ecrãs 08 e 23 do Figma: o mesmo ecrã, o 23 é
+// * quando falta algo). Abre a partir das Receitas, do Início ou do detalhe
+// * do alimento. Fluxo: escolher pessoas → ver ingredientes (tens / falta) →
+// * "Às compras" se faltar algo → "Cozinhei esta receita" tira do inventário.
 class ReceitaDetalhe extends StatefulWidget {
   const ReceitaDetalhe({super.key, required this.receita});
 
@@ -27,7 +30,8 @@ class ReceitaDetalhe extends StatefulWidget {
 }
 
 class _ReceitaDetalheState extends State<ReceitaDetalhe> {
-  // late = recebe o valor no initState, antes de ser usado
+  // ? late = recebe o valor no initState, antes de ser usado. É estado do
+  // ? ecrã (não da receita), para mudar as pessoas não mudar a receita
   late int _pessoas;
 
   @override
@@ -36,7 +40,8 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
     _pessoas = widget.receita.pessoasBase;
   }
 
-  // chip à direita de cada ingrediente
+  // ? chip à direita de cada ingrediente: primeiro o que falta (o mais
+  // ? importante), depois "Tens", depois quando expira
   TagChip _chip(Ingrediente i) {
     final double falta = i.falta(_pessoas);
     if (falta > 0) {
@@ -54,6 +59,7 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final Receita r = widget.receita;
+    // ? calculado a cada build porque muda com o número de pessoas
     final emFalta = r.ingredientes.where((i) => i.falta(_pessoas) > 0).toList();
 
     return Scaffold(
@@ -67,7 +73,7 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
               titulo: r.titulo,
             ),
             const SizedBox(height: AppSpacing.midsmall),
-            // lugar da foto da receita
+            // ? lugar da foto da receita (ainda não há fotos na tabela receitas)
             Container(
               height: 120,
               decoration: BoxDecoration(
@@ -93,7 +99,7 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
               ),
             ),
             const SizedBox(height: AppSpacing.small),
-            // tempo, dificuldade e quantos alimentos a expirar salva
+            // ? tempo, dificuldade e quantos alimentos a expirar salva
             Row(
               children: [
                 _Resumo(icone: Icons.schedule, valor: '${r.minutos} min', legenda: 'tempo'),
@@ -104,7 +110,8 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
               ],
             ),
             const SizedBox(height: AppSpacing.midsmall),
-            // seletor de pessoas
+            // ? seletor de pessoas: as quantidades escalam porque cada
+            // ? ingrediente guarda a quantidade por pessoa (limite 1 a 12)
             AppCard(
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.midsmall,
@@ -157,7 +164,7 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
                   ),
               ],
             ),
-            // aviso do que falta (ecrã 23)
+            // ? aviso do que falta (ecrã 23), com um atalho para a lista de compras
             if (emFalta.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.midsmall),
               Container(
@@ -187,6 +194,7 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
                       texto: 'Às compras',
                       tipo: BotaoTipo.tonal,
                       onPressed: () {
+                        // ? 1.ª letra maiúscula para ficar igual às outras compras
                         for (final i in emFalta) {
                           frigorifico.adicionarCompra(
                             i.nome[0].toUpperCase() + i.nome.substring(1),
@@ -224,7 +232,8 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
           child: AppButton(
             texto: 'Cozinhei esta receita',
             expandir: true,
-            // sem os ingredientes todos o botão fica desativado
+            // ? sem os ingredientes todos o botão fica desativado, porque o
+            // ? cozinhar() tirava do inventário coisas que não existem
             onPressed: emFalta.isEmpty
                 ? () {
                     frigorifico.cozinhar(r, _pessoas);
@@ -242,7 +251,8 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
   }
 }
 
-// Um dos 3 cartões de resumo da receita
+// ? Um dos 3 cartões de resumo da receita (widget à parte porque são 3
+// ? iguais, só mudam os textos)
 class _Resumo extends StatelessWidget {
   const _Resumo({
     required this.icone,
@@ -257,7 +267,7 @@ class _Resumo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    // Expanded: os 3 cartões ficam com a mesma largura
+    // ? Expanded: os 3 cartões ficam com a mesma largura
     return Expanded(
       child: AppCard(
         padding: const EdgeInsets.all(AppSpacing.small),

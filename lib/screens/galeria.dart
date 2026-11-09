@@ -13,13 +13,16 @@ import '../widgets/section_title.dart';
 import '../widgets/small_widgets.dart';
 import '../widgets/tag_chip.dart';
 
-// Ecrã temporário para comparar os widgets com a página "- App" do Figma.
-// Para o abrir: no main.dart troca home: const HomeShell() por home: const Galeria()
+// * ECRÃ TEMPORÁRIO (não faz parte do fluxo da app): mostra todos os widgets
+// * juntos para os comparar com a página "- App" do Figma.
+// * Para o abrir: no main.dart troca home: const _PortaoLogin() por
+// * home: const Galeria()
 class Galeria extends StatelessWidget {
   const Galeria({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ? os botões precisam de uma função; aqui não fazem nada
     void nada() {}
     const espaco = SizedBox(height: AppSpacing.mid);
 

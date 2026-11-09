@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
 
-// variantes "estilo" do Botão ícone do Figma
+// * Botão redondo só com ícone (componente Botão ícone do Figma): sino e
+// * definições do Início, voltar, + / −, ⋮…
+
+// ? variantes "estilo" do Botão ícone do Figma
 enum CirculoEstilo { superficie, contorno, preenchido, transparente }
 
 class CircleIconButton extends StatelessWidget {
@@ -18,11 +21,12 @@ class CircleIconButton extends StatelessWidget {
   });
 
   final IconData icone;
-  // texto lido pelo leitor de ecrã e mostrado ao carregar sem largar
+  // ! obrigatório porque um botão só com ícone não diz o que faz: o texto é
+  // ! lido pelo leitor de ecrã e mostrado ao carregar sem largar
   final String tooltip;
   final VoidCallback? onPressed;
   final CirculoEstilo estilo;
-  // número vermelho no canto (ex.: avisos por ler)
+  // ? número vermelho no canto (ex.: avisos urgentes no sino do Início)
   final String? badge;
   final Color? corIcone;
 
@@ -31,6 +35,7 @@ class CircleIconButton extends StatelessWidget {
     Color? fundo;
     Color frente = AppTokens.textPrimary;
     BorderSide? borda;
+    // ? 48 = tamanho mínimo para um dedo; o da superfície é 52 como no Figma
     double tamanho = 48;
 
     switch (estilo) {
@@ -61,7 +66,8 @@ class CircleIconButton extends StatelessWidget {
     );
 
     if (badge == null) return botao;
-    // Badge = bolinha com número, já vem no Material 3
+    // ? Badge = bolinha com número, já vem no Material 3 (não precisei de a
+    // ? desenhar com um Stack)
     return Badge(
       label: Text(badge!),
       backgroundColor: AppColors.danger600,

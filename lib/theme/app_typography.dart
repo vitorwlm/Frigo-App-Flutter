@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
-// height = altura da linha (x tamanho da letra)
+// * Estilos de texto do Figma (Heading / Body / Label), com a Montserrat
+// * definida no app_theme.dart. Os nomes são os do Material (displayLarge,
+// * bodyMedium…) para os widgets do Flutter os usarem sozinhos.
+// * height = altura da linha (x tamanho da letra)
 class AppTypography {
   static const TextTheme textTheme = TextTheme(
-    // Números grandes dos cartões hero (Display/Large no Figma)
+    // ? Números grandes dos cartões hero (Display/Large no Figma)
     displayLarge: TextStyle(
       fontSize: 48,
       fontWeight: FontWeight.w700,
@@ -11,7 +14,7 @@ class AppTypography {
       letterSpacing: -1,
     ),
 
-    // Títulos
+    // ? Títulos
     headlineLarge: TextStyle(
       fontSize: 32,
       fontWeight: FontWeight.w700,
@@ -40,7 +43,7 @@ class AppTypography {
       height: 1.4,
     ),
 
-    // Texto corrido
+    // ? Texto corrido
     bodyLarge: TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w400,
@@ -57,7 +60,7 @@ class AppTypography {
       height: 1.45,
     ),
 
-    // Etiquetas
+    // ? Etiquetas
     labelLarge: TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w600,

@@ -20,21 +20,27 @@ import '../widgets/section_title.dart';
 import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
 
-// Ecrãs 10 (lista) e 24 (partilhar) do Figma
+// * ECRÃ COMPRAS (ecrãs 10 e 24 do Figma) — 5.º separador da HomeShell.
+// * Fluxo: o que entra na lista vem do Adicionar (mostrarNovaCompra, em
+// * baixo), do "Comprar" do Inventário, das Receitas e do Impacto → tocar
+// * numa linha passa-a para "No carrinho" → Limpar. A lista é partilhada em
+// * Realtime (outro telemóvel vê as mudanças) e pode ser enviada por mensagem.
+// * StatelessWidget porque a lista está toda no frigorifico
 class ListaCompras extends StatelessWidget {
   const ListaCompras({super.key});
 
-  // texto da lista para partilhar ou copiar
+  // ? texto da lista para partilhar ou copiar (só o que falta comprar)
   String _textoLista(List<Compra> porComprar) {
     final linhas = porComprar.map((c) => '• ${c.nome}').join('\n');
     return 'Lista de compras · Frigu\n$linhas';
   }
 
+  // ? Folha com pré-visualização do texto e duas formas de o enviar
   void _partilhar(BuildContext context, List<Compra> porComprar) {
     final String texto = _textoLista(porComprar);
     showModalBottomSheet<void>(
       context: context,
-      // deixa a folha crescer e fazer scroll em ecrãs pequenos
+      // ? deixa a folha crescer e fazer scroll em ecrãs pequenos
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
@@ -65,7 +71,8 @@ class ListaCompras extends StatelessWidget {
                       descricao: 'WhatsApp, SMS ou outra app',
                       onTap: () {
                         Navigator.pop(folha);
-                        // abre a folha de partilha do telemóvel
+                        // ? share_plus abre a folha de partilha do telemóvel, para
+                        // ? não ter de programar o WhatsApp, o SMS, etc. um a um
                         SharePlus.instance.share(ShareParams(text: texto));
                       },
                     ),
@@ -76,7 +83,7 @@ class ListaCompras extends StatelessWidget {
                       tom: OpcaoTom.neutro,
                       onTap: () {
                         Navigator.pop(folha);
-                        // Clipboard = área de transferência (copiar/colar)
+                        // ? Clipboard = área de transferência (copiar/colar)
                         Clipboard.setData(ClipboardData(text: texto));
                         mostrarMensagem(context, 'Lista copiada');
                       },
@@ -107,7 +114,9 @@ class ListaCompras extends StatelessWidget {
         final porComprar = frigorifico.compras.where((c) => !c.noCarrinho).toList();
         final noCarrinho = frigorifico.compras.where((c) => c.noCarrinho).toList();
 
-        // o que ainda está bom em casa (5 dias ou mais): não vai para a lista
+        // ? o que ainda está bom em casa (5 dias ou mais): mostrado no topo
+        // ? para lembrar de não o comprar outra vez (ODS 12.3); só 2 para o
+        // ? texto caber no cartão
         final emCasa = frigorifico.noFrigorifico
             .where((i) => i.dias >= 5)
             .take(2)
@@ -120,6 +129,7 @@ class ListaCompras extends StatelessWidget {
               AppSpacing.midsmall,
               AppSpacing.midsmall,
               AppSpacing.midsmall,
+              // ? 88 em baixo para o botão flutuante não tapar a última linha
               88,
             ),
             children: [
@@ -130,6 +140,7 @@ class ListaCompras extends StatelessWidget {
                   CircleIconButton(
                     icone: Icons.share_outlined,
                     tooltip: 'Partilhar lista',
+                    // ? lista vazia = nada para partilhar (botão desligado)
                     onPressed: porComprar.isEmpty
                         ? null
                         : () => _partilhar(context, porComprar),
@@ -192,6 +203,8 @@ class ListaCompras extends StatelessWidget {
     );
   }
 
+  // ? A linha toda e o círculo fazem o mesmo, para ser fácil de tocar no
+  // ? supermercado com uma mão
   Widget _linha(Compra c) {
     return ItemRow(
       titulo: c.nome,
@@ -209,7 +222,8 @@ class ListaCompras extends StatelessWidget {
       t.isEmpty ? t : t[0].toUpperCase() + t.substring(1);
 }
 
-// Círculo de marcar: vazio por comprar, teal com ✓ no carrinho
+// ? Círculo de marcar: vazio por comprar, teal com ✓ no carrinho.
+// ? O ✓ fica transparente em vez de sair, para o círculo não mudar de tamanho
 class _Marcar extends StatelessWidget {
   const _Marcar({required this.marcado, required this.onTap});
 
@@ -236,7 +250,8 @@ class _Marcar extends StatelessWidget {
   }
 }
 
-// Janela para acrescentar à lista (botão Adicionar no separador Compras)
+// ? Caixa para acrescentar à lista. Chamada pelo botão Adicionar da HomeShell
+// ? (main.dart) quando o separador Compras está aberto
 Future<void> mostrarNovaCompra(BuildContext context) async {
   final nome = TextEditingController();
   final bool? guardar = await showDialog<bool>(
@@ -248,7 +263,7 @@ Future<void> mostrarNovaCompra(BuildContext context) async {
         autofocus: true,
         textCapitalization: TextCapitalization.sentences,
         decoration: const InputDecoration(labelText: 'O que falta?'),
-        // Enter no teclado também guarda
+        // ? Enter no teclado também guarda (mais rápido para vários itens)
         onSubmitted: (_) => Navigator.pop(dialogo, true),
       ),
       actions: [

@@ -4,7 +4,11 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 
-// Motivo do ecrã Impacto: nome, número e barra
+// * Widgets pequenos usados só num ecrã cada, juntos num ficheiro para não
+// * ter muitos ficheiros minúsculos.
+
+// ? Motivo do ecrã Impacto: nome, número e barra (a barra compara os
+// ? motivos entre si sem precisar de ler os números)
 class ReasonBar extends StatelessWidget {
   const ReasonBar({
     super.key,
@@ -15,7 +19,7 @@ class ReasonBar extends StatelessWidget {
 
   final String motivo;
   final int valor;
-  // 0.0 a 1.0
+  // ? 0.0 a 1.0 (o LinearProgressIndicator usa esta escala)
   final double fracao;
 
   @override
@@ -54,7 +58,7 @@ class ReasonBar extends StatelessWidget {
   }
 }
 
-// Passo numerado da receita
+// ? Passo numerado da receita (detalhe da receita)
 class StepRow extends StatelessWidget {
   const StepRow({super.key, required this.numero, required this.texto});
 
@@ -82,7 +86,8 @@ class StepRow extends StatelessWidget {
   }
 }
 
-// Pontos do onboarding: o atual é mais comprido
+// ? Pontos do onboarding: o atual é mais comprido, para saber em que passo
+// ? se está
 class PageDots extends StatelessWidget {
   const PageDots({super.key, required this.total, required this.atual});
 
@@ -95,7 +100,8 @@ class PageDots extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (int i = 0; i < total; i++)
-          // AnimatedContainer anima a mudança de largura e de cor
+          // ? AnimatedContainer anima a mudança de largura e de cor sem
+          // ? precisar de um AnimationController
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             margin: const EdgeInsets.symmetric(horizontal: 4),

@@ -5,8 +5,14 @@ import '../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/list_card.dart';
 
+// * FOLHA "ORDENAR E FILTRAR" (ecrã 21 do Figma) + a classe Filtros.
+// * Abre pelo botão de filtros do Inventário; ao carregar "Ver N" devolve os
+// * filtros escolhidos e o Inventário aplica-os.
+
 enum Ordem { validade, nome, recentes }
 
+// ? As categorias que a app mostra (as chaves da base de dados estão no
+// ? nuvem.dart). Pública porque o Adicionar e o detalhe também a usam
 const List<String> todasCategorias = [
   'Laticínios',
   'Ovos',
@@ -16,6 +22,8 @@ const List<String> todasCategorias = [
   'Outros',
 ];
 
+// ? Os filtros todos num objeto, para passar de uma vez entre o Inventário
+// ? e a folha
 class Filtros {
   Filtros({
     this.ordem = Ordem.validade,
@@ -23,17 +31,19 @@ class Filtros {
     this.soIncertos = false,
     Set<String>? categorias,
   }) : categorias = categorias ?? <String>{};
-  // ↑ lista de inicialização: corre antes do corpo do construtor
+  // ? ↑ lista de inicialização: corre antes do corpo do construtor.
+  // ? Não uso const {} por defeito porque o Set tem de dar para mudar
 
   Ordem ordem;
   bool soAbertos;
   bool soIncertos;
   Set<String> categorias;
 
-  // quantos filtros estão ligados (para o número no botão do cabeçalho)
+  // ? quantos filtros estão ligados (para o número no botão do cabeçalho)
   int get ativos =>
       (soAbertos ? 1 : 0) + (soIncertos ? 1 : 0) + categorias.length;
 
+  // ? cópia nova (também do Set), para a folha não mexer nos filtros atuais
   Filtros copia() => Filtros(
     ordem: ordem,
     soAbertos: soAbertos,
@@ -42,25 +52,27 @@ class Filtros {
   );
 }
 
-// Abre a folha (ecrã 21) e devolve os filtros escolhidos, ou null se fechar
+// ? Abre a folha e devolve os filtros escolhidos, ou null se fechar.
+// ? contar vem do Inventário: diz quantos alimentos ficariam, para o "Ver N"
 Future<Filtros?> mostrarFiltros(
   BuildContext context,
   Filtros atuais,
   int Function(Filtros) contar,
 ) {
-  // trabalha numa cópia: se fechar sem "Ver", nada muda
+  // ? trabalha numa cópia: se fechar sem "Ver", nada muda
   final Filtros f = atuais.copia();
 
   return showModalBottomSheet<Filtros>(
     context: context,
-    // deixa a folha ser mais alta que meio ecrã
+    // ? deixa a folha ser mais alta que meio ecrã
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
     backgroundColor: AppTokens.bgApp,
     builder: (context) {
       final textTheme = Theme.of(context).textTheme;
-      // StatefulBuilder dá um setState só para a folha
+      // ? StatefulBuilder dá um setState só para a folha (o "Ver N" atualiza
+      // ? a cada filtro que se liga)
       return StatefulBuilder(
         builder: (context, setFolha) {
           return SafeArea(
@@ -115,6 +127,7 @@ Future<Filtros?> mostrarFiltros(
                     spacing: AppSpacing.small,
                     runSpacing: AppSpacing.small,
                     children: [
+                      // ? FilterChip porque se podem escolher várias categorias
                       for (final c in todasCategorias)
                         FilterChip(
                           label: Text(c),
@@ -147,7 +160,7 @@ Future<Filtros?> mostrarFiltros(
                         child: AppButton(
                           texto: 'Ver ${contar(f)} alimentos',
                           expandir: true,
-                          // devolve os filtros a quem abriu a folha
+                          // ? devolve os filtros a quem abriu a folha
                           onPressed: () => Navigator.pop(context, f),
                         ),
                       ),

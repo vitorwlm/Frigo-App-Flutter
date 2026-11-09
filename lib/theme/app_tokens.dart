@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-// Cores com significado (coleção "tokens" do Figma).
-// Os ecrãs usam estas; a paleta (AppColors) só se usa aqui.
+// * Cores com significado (coleção "tokens" do Figma).
+// * Os ecrãs usam estas; a paleta (AppColors) só se usa aqui. Assim um ecrã
+// * diz "textDanger" e não "danger600": se o tom mudar, muda só aqui.
 class AppTokens {
-  // fundos
+  // ? fundos
   static const Color bgApp = AppColors.gray100;
   static const Color bgSurface = AppColors.white;
   static const Color bgSubtle = AppColors.gray100;
@@ -15,7 +16,8 @@ class AppTokens {
   static const Color bgDanger = AppColors.danger100;
   static const Color bgWarning = AppColors.warning100;
 
-  // cartões hero (o grande cartão de cima)
+  // ? cartões hero (o grande cartão de cima do Início), uma cor por estado
+  // ? do frigorífico: ok, temperatura alta, porta aberta, sem ligação
   static const Color heroOk = AppColors.primary600;
   static const Color heroDanger = AppColors.danger600;
   static const Color heroWarning = AppColors.warning700;
@@ -23,7 +25,7 @@ class AppTokens {
   static const Color heroOverlay = AppColors.white16;
   static const Color heroBorder = AppColors.white24;
 
-  // texto
+  // ? texto
   static const Color textPrimary = AppColors.gray900;
   static const Color textSecondary = AppColors.gray500;
   static const Color textOnHero = AppColors.white;
@@ -31,11 +33,11 @@ class AppTokens {
   static const Color textDanger = AppColors.danger600;
   static const Color textWarning = AppColors.warning700;
 
-  // contornos
+  // ? contornos
   static const Color border = AppColors.gray200;
   static const Color borderStrong = AppColors.gray400;
 
-  // barra de cor das linhas
+  // ? barra de cor das linhas do inventário (urgente, aviso, normal)
   static const Color statusDanger = AppColors.danger500;
   static const Color statusWarning = AppColors.warning500;
   static const Color statusNeutral = AppColors.gray400;

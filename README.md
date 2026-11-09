@@ -35,19 +35,24 @@ O protótipo é um mini frigorífico impresso em 3D, arrefecido com gelo e contr
 
 | Ecrã | O que mostra | Estado |
 |---|---|---|
-| Início | Estado do frigorífico, gráfico de temperatura e receita do dia | Em curso |
-| Inventário | Alimentos e validades | Por fazer |
-| Receitas | Sugestões com os alimentos disponíveis | Por fazer |
-| Impacto | Desperdício evitado | Por fazer |
-| Compras | Lista de compras | Por fazer |
-| Admin | Gestão de receitas e validades (só administradores) | Por fazer |
+| Login | Entrar e criar conta (Supabase Auth) | Feito |
+| Início | Estado do frigorífico, a expirar e receita do dia | Feito |
+| Temperatura | Histórico de 24 h / 7 dias e aberturas da porta | Feito (à espera das leituras da placa) |
+| Inventário | Alimentos e validades, filtros, deslizar para usar | Feito |
+| Receitas | Sugestões com os alimentos disponíveis | Feito |
+| Impacto | Desperdício evitado (kg, €, CO₂e) | Feito (histórico ainda de exemplo) |
+| Compras | Lista de compras partilhada | Feito |
+| Avisos e Definições | Alimentos a expirar, temperatura-alvo, conta | Feito |
+| Administração | Receitas e validades por categoria (só administradores) | Feito |
+| Foto da câmara | Foto analisada pelo Gemini | Por fazer |
 
 ## Tecnologias
 
 - Flutter e Dart
 - Material 3, com cores e tipografia do nosso Figma (fonte Montserrat)
-- fl_chart para os gráficos
-- Mais tarde: Supabase para os dados e a ESP32-S3 do frigorífico
+- fl_chart para os gráficos, share_plus para partilhar a lista
+- Supabase: Auth, base de dados com RLS, Realtime e Edge Function com o Gemini
+- ESP32-S3 com câmara no frigorífico (por ligar)
 
 ## Como correr
 
@@ -60,15 +65,21 @@ flutter pub get
 flutter run
 ```
 
+Antes de correr, copia `lib/config/secrets.example.dart` para `lib/config/secrets.dart` e põe o URL e a chave publishable do Supabase. Os testes correm com `flutter test`.
+
 ## Estrutura
 
 ```
 lib/
-├── main.dart     # arranque e barra de navegação
+├── main.dart     # arranque, login e barra de navegação
+├── config/       # chaves do Supabase (secrets.dart fica fora do Git)
+├── data/         # frigorifico.dart: os dados partilhados por todos os ecrãs
+├── models/       # Item, Receita, Compra, Evento
 ├── screens/      # um ficheiro por ecrã
+├── services/     # nuvem.dart: ligação ao Supabase
 ├── theme/        # cores, letras e tema
-├── widgets/      # cartões e botões reutilizáveis
-└── services/     # ligação aos dados (ainda vazio)
+└── widgets/      # cartões e botões reutilizáveis
+test/             # testes unitários
 assets/fonts/     # Montserrat
 ```
 

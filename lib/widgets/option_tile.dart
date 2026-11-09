@@ -4,9 +4,11 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 
+// ? cor do quadrado do ícone: a 1.ª opção (a recomendada) é a mais forte
 enum OpcaoTom { marca, suave, neutro }
 
-// Opção das folhas de baixo (Adicionar alimento, Partilhar lista)
+// * Opção das folhas de baixo (Adicionar alimento, Partilhar lista):
+// * ícone + título + descrição, para explicar cada escolha antes de tocar
 class OptionTile extends StatelessWidget {
   const OptionTile({
     super.key,

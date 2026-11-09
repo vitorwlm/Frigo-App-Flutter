@@ -9,11 +9,15 @@ import '../widgets/option_tile.dart';
 import '../widgets/snack.dart';
 import 'filtros_sheet.dart';
 
-// Folha "Adicionar alimento" (ecrã 03 do Figma)
+// * FOLHA "ADICIONAR ALIMENTO" (ecrã 03 do Figma).
+// * Abre pelo botão flutuante Adicionar do Início e do Inventário (main.dart).
+// * Fluxo: Tirar foto (câmara do frigorífico, ainda falso) · Código de barras
+// * (em breve) · Escrever à mão → caixa _escreverAMao → frigorifico.adicionar.
+// * Folha e não ecrã porque são só 3 escolhas e a pessoa não perde o sítio.
 void mostrarAdicionar(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
-    // deixa a folha crescer e fazer scroll em ecrãs pequenos
+    // ? deixa a folha crescer e fazer scroll em ecrãs pequenos
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
@@ -50,7 +54,7 @@ void mostrarAdicionar(BuildContext context) {
                     descricao: 'Atualiza com a câmara do frigorífico',
                     onTap: () {
                       Navigator.pop(folha);
-                      // mais tarde: chama a Edge Function analisar-foto
+                      // TODO: chamar a Edge Function analisar-foto (por agora só mostra a mensagem)
                       mostrarMensagem(context, 'Pedido enviado à câmara');
                     },
                   ),
@@ -91,9 +95,11 @@ void mostrarAdicionar(BuildContext context) {
   );
 }
 
-// Janela para escrever um alimento à mão
+// ? Caixa para escrever um alimento à mão (sobras, coisas sem embalagem,
+// ? o que a câmara não vê)
 Future<void> _escreverAMao(BuildContext context) async {
-  // TextEditingController guarda o texto escrito num TextField
+  // ? TextEditingController guarda o texto escrito num TextField; já vêm com
+  // ? valores comuns (1 unidade, 3 dias) para escrever menos
   final nome = TextEditingController();
   final quantidade = TextEditingController(text: '1');
   final dias = TextEditingController(text: '3');
@@ -102,6 +108,7 @@ Future<void> _escreverAMao(BuildContext context) async {
 
   final bool? guardar = await showDialog<bool>(
     context: context,
+    // ? StatefulBuilder porque os dropdowns mudam valores dentro da caixa
     builder: (dialogo) => StatefulBuilder(
       builder: (dialogo, setDialogo) => AlertDialog(
         title: const Text('Escrever à mão'),
@@ -121,15 +128,21 @@ Future<void> _escreverAMao(BuildContext context) async {
                     child: TextField(
                       controller: quantidade,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Quantidade'),
+                      decoration: const InputDecoration(
+                        labelText: 'Quantidade',
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.small),
-                  // DropdownButton = lista que abre ao tocar
+                  // ? DropdownButton = lista que abre ao tocar; só deixa
+                  // ? escolher unidades que o Item sabe converter em peso
                   DropdownButton<String>(
                     value: unidade,
                     items: const [
-                      DropdownMenuItem(value: 'unidades', child: Text('unidades')),
+                      DropdownMenuItem(
+                        value: 'unidades',
+                        child: Text('unidades'),
+                      ),
                       DropdownMenuItem(value: 'g', child: Text('g')),
                       DropdownMenuItem(value: 'L', child: Text('L')),
                       DropdownMenuItem(value: 'caixa', child: Text('caixa')),
@@ -173,22 +186,27 @@ Future<void> _escreverAMao(BuildContext context) async {
   );
 
   if (guardar != true || nome.text.trim().isEmpty) return;
+  // ! tryParse devolve null se o texto não for um número (aí uso 0 / -1
+  // ! para cair no aviso de baixo em vez de a app rebentar)
   final int q = int.tryParse(quantidade.text) ?? 0;
   final int d = int.tryParse(dias.text) ?? -1;
-  // não aceita quantidade 0 nem validade no passado
+  // ? não aceita quantidade 0 nem validade no passado
   if (q <= 0 || d < 0) {
     if (context.mounted) {
-      mostrarMensagem(context, 'Quantidade e dias têm de ser números positivos');
+      mostrarMensagem(
+        context,
+        'Quantidade e dias têm de ser números positivos',
+      );
     }
     return;
   }
   frigorifico.adicionar(
     nome: nome.text.trim(),
-    // tryParse devolve null se o texto não for um número
     quantidade: q,
     unidade: unidade,
     dias: d,
     categoria: categoria,
   );
-  if (context.mounted) mostrarMensagem(context, '${nome.text.trim()} adicionado');
+  if (context.mounted)
+    mostrarMensagem(context, '${nome.text.trim()} adicionado');
 }

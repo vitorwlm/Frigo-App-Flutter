@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 
-// Cartão grande e colorido do topo dos ecrãs
+// * Cartão grande e colorido do topo dos ecrãs (Início, detalhe, Impacto,
+// * Compras). A cor vem de fora porque muda com o estado (AppTokens.hero*)
 class HeroCard extends StatelessWidget {
   const HeroCard({super.key, required this.cor, required this.child, this.onTap});
 
@@ -13,7 +14,8 @@ class HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Material + InkWell = fundo com cantos e efeito de toque
+    // ! Material + InkWell = fundo com cantos e efeito de toque (um Container
+    // ! tapava o efeito de toque)
     return Material(
       color: cor,
       borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -29,7 +31,8 @@ class HeroCard extends StatelessWidget {
   }
 }
 
-// Pílula translúcida com ícone dentro do HeroCard ("Tudo bem", "Porta aberta"…)
+// ? Pílula translúcida com ícone dentro do HeroCard ("Tudo bem", "Porta
+// ? aberta"…): diz o estado em palavras, não só pela cor (acessibilidade)
 class HeroPill extends StatelessWidget {
   const HeroPill({super.key, required this.texto, required this.icone});
 

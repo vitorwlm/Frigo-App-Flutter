@@ -1,3 +1,8 @@
+// * ECRÃ RECEITAS (ecrã 07 do Figma) — 3.º separador da HomeShell.
+// * Fluxo: destaque "Melhor para hoje" → filtros (Todas / Tens tudo / Até
+// * 20 min) → "Também aproveitam"; a lupa abre a pesquisa. Tocar numa
+// * receita → ReceitaDetalhe. As receitas vêm do Supabase (o admin cria-as).
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -17,7 +22,7 @@ import 'receita_detalhe.dart';
 
 enum FiltroReceita { todas, tensTudo, rapidas }
 
-// Ecrã 07 do Figma
+// ? StatefulWidget porque guarda o filtro e a pesquisa
 class Receitas extends StatefulWidget {
   const Receitas({super.key});
 
@@ -27,7 +32,8 @@ class Receitas extends StatefulWidget {
 
 class _ReceitasState extends State<Receitas> {
   FiltroReceita _filtro = FiltroReceita.todas;
-  // pesquisa: campo aberto e o texto escrito
+  // ? pesquisa: campo aberto e o texto escrito. O campo só aparece ao tocar
+  // ? na lupa, para não ocupar espaço quando não se procura
   bool _aProcurar = false;
   String _procura = '';
   final _campo = TextEditingController();
@@ -38,7 +44,8 @@ class _ReceitasState extends State<Receitas> {
     super.dispose();
   }
 
-  // procura no título, na descrição e nos ingredientes, sem ligar a maiúsculas
+  // ? procura no título, na descrição e nos ingredientes, sem ligar a
+  // ? maiúsculas: assim "ovo" encontra receitas que usam ovos
   bool _encontra(Receita r) {
     final q = _procura.trim().toLowerCase();
     if (q.isEmpty) return true;
@@ -47,6 +54,7 @@ class _ReceitasState extends State<Receitas> {
         r.ingredientes.any((i) => i.nome.toLowerCase().contains(q));
   }
 
+  // ? fechar a pesquisa também apaga o texto, para voltar à lista normal
   void _alternarPesquisa() {
     setState(() {
       _aProcurar = !_aProcurar;
@@ -92,7 +100,8 @@ class _ReceitasState extends State<Receitas> {
 
   @override
   Widget build(BuildContext context) {
-    // redesenha quando o inventário muda (o que tens muda as receitas)
+    // ? redesenha quando o inventário muda (o que tens muda o "Tens tudo"
+    // ? e o destaque)
     return ListenableBuilder(
       listenable: frigorifico,
       builder: (context, _) => _conteudo(context),
@@ -101,10 +110,12 @@ class _ReceitasState extends State<Receitas> {
 
   Widget _conteudo(BuildContext context) {
     final receitas = frigorifico.receitas;
-    // a melhor para hoje: tens tudo e salva mais alimentos a expirar
+    if (receitas.isEmpty) return _semReceitas(context);
+    // ? a melhor para hoje: tens tudo e salva mais alimentos a expirar
+    // ? (a mesma regra do frigorifico.receitaDoDia do Início)
     final candidatas = receitas.where((r) => r.tensTudo(r.pessoasBase)).toList()
       ..sort((a, b) => b.salva.compareTo(a.salva));
-    // ↑ .. = faz o sort e devolve a própria lista
+    // ? ↑ .. = faz o sort e devolve a própria lista
     final Receita destaque =
         candidatas.isNotEmpty ? candidatas.first : receitas.first;
     final outras =
@@ -148,9 +159,34 @@ class _ReceitasState extends State<Receitas> {
               ),
             ),
           ],
-          // com texto escrito, mostra só os resultados
+          // ? com texto escrito, mostra só os resultados (sem destaque nem
+          // ? filtros, que confundiam)
           if (_procura.trim().isNotEmpty) ..._resultados(context, receitas)
           else ..._normal(context, destaque, outras),
+        ],
+      ),
+    );
+  }
+
+  // ? ainda não há receitas na base de dados: explica onde se criam em vez
+  // ? de mostrar um ecrã vazio
+  Widget _semReceitas(BuildContext context) {
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpacing.midsmall),
+        children: [
+          const ScreenHeader(
+            subtitulo: 'Com o que está a acabar',
+            titulo: 'Receitas',
+          ),
+          const SizedBox(height: AppSpacing.midsmall),
+          Text(
+            'Ainda não há receitas. O administrador pode criá-las em '
+            'Definições → Administração.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppTokens.textSecondary,
+            ),
+          ),
         ],
       ),
     );
@@ -204,7 +240,8 @@ class _ReceitasState extends State<Receitas> {
     ];
   }
 
-  // cartão de uma receita + espaço por baixo
+  // ? cartão de uma receita + espaço por baixo; devolve uma lista para
+  // ? entrar com ... nas outras listas
   List<Widget> _cartao(BuildContext context, Receita r) => [
     RecipeCard(
       titulo: r.titulo,
@@ -219,7 +256,8 @@ class _ReceitasState extends State<Receitas> {
   ];
 }
 
-// Cartão grande "Melhor para hoje"
+// * Cartão grande "Melhor para hoje": destaca a receita que mais ajuda a
+// * não deitar comida fora (ODS 12.3)
 class _Destaque extends StatelessWidget {
   const _Destaque({required this.receita, required this.onTap});
 
@@ -229,11 +267,14 @@ class _Destaque extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    // ingredientes que expiram em 2 dias ou menos, para os chips
+    // ? ingredientes que expiram em 2 dias ou menos, para os chips: mostram
+    // ? porque é que esta receita é a melhor hoje
     final aExpirar = receita.ingredientes
         .where((i) => i.dias != null && i.dias! <= 2)
         .toList();
 
+    // ? Material + InkWell (e não Container) para o cartão inteiro ter o
+    // ? efeito de toque e os cantos cortarem esse efeito
     return Material(
       color: AppTokens.heroOk,
       borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -243,7 +284,8 @@ class _Destaque extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Stack = widgets uns por cima dos outros
+            // ? Stack = widgets uns por cima dos outros (a etiqueta fica por
+            // ? cima do lugar da foto)
             SizedBox(
               height: 120,
               child: Stack(

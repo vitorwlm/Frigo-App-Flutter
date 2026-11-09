@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_tokens.dart';
 
-// Gráfico do ecrã 20: linha da temperatura, faixa do alvo,
-// linhas tracejadas nas aberturas da porta e ponto vermelho no máximo
+// * Gráfico do ecrã 20 (Histórico da temperatura): linha da temperatura,
+// * faixa do alvo, linhas tracejadas nas aberturas da porta e ponto vermelho
+// * no máximo. Usei o fl_chart porque desenhar um gráfico à mão com
+// * CustomPaint era muito mais código. Só desenha: os dados vêm do ecrã.
 class HistoryChart extends StatelessWidget {
   const HistoryChart({
     super.key,
@@ -15,13 +17,14 @@ class HistoryChart extends StatelessWidget {
     required this.etiqueta,
   });
 
-  // (momento, °C), do mais antigo para agora
+  // ? (momento, °C), do mais antigo para agora
   final List<(DateTime, double)> leituras;
-  // momentos em que a porta abriu
+  // ? momentos em que a porta abriu
   final List<DateTime> portas;
   final double alvoMin;
   final double alvoMax;
-  // texto do eixo de baixo para um momento ("06:00", "seg"…), ou null
+  // ? texto do eixo de baixo para um momento ("06:00", "seg"…), ou null.
+  // ? Vem de fora como função porque muda entre 24 h e 7 dias
   final String? Function(DateTime t) etiqueta;
 
   @override
@@ -32,12 +35,13 @@ class HistoryChart extends StatelessWidget {
     );
 
     final DateTime inicio = leituras.first.$1;
-    // x = minutos desde a primeira leitura
+    // ? x = minutos desde a primeira leitura (o fl_chart só aceita números,
+    // ? não datas)
     double x(DateTime t) => t.difference(inicio).inMinutes.toDouble();
 
     final pontos = [for (final l in leituras) FlSpot(x(l.$1), l.$2)];
     final double maxX = pontos.last.x;
-    // reduce = compara todos e fica com o maior
+    // ? reduce = compara todos e fica com o maior
     final FlSpot maximo = pontos.reduce((a, b) => b.y > a.y ? b : a);
 
     return LineChart(
@@ -45,9 +49,10 @@ class HistoryChart extends StatelessWidget {
         minX: 0,
         maxX: maxX,
         minY: 0,
+        // ? 0–10 °C fixo para o gráfico não saltar de escala entre dias
         maxY: 10,
         borderData: FlBorderData(show: false),
-        // linhas cinzentas só nos 2, 5 e 8 °C
+        // ? linhas cinzentas só nos 2, 5 e 8 °C (menos riscos, mais fácil de ler)
         gridData: FlGridData(
           drawVerticalLine: false,
           horizontalInterval: 1,
@@ -55,6 +60,7 @@ class HistoryChart extends StatelessWidget {
           getDrawingHorizontalLine: (v) =>
               const FlLine(color: AppTokens.border, strokeWidth: 1),
         ),
+        // ? faixa teal clara = zona do alvo, para se ver logo quando sai dela
         rangeAnnotations: RangeAnnotations(
           horizontalRangeAnnotations: [
             HorizontalRangeAnnotation(
@@ -64,7 +70,7 @@ class HistoryChart extends StatelessWidget {
             ),
           ],
         ),
-        // tracejado âmbar em cada abertura da porta
+        // ? tracejado âmbar em cada abertura da porta: explica os picos
         extraLinesData: ExtraLinesData(
           verticalLines: [
             for (final p in portas)
@@ -94,11 +100,11 @@ class HistoryChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 24,
-              // um teste por leitura; só alguns têm texto
+              // ? um teste por leitura; só alguns têm texto (função etiqueta)
               interval: pontos.length > 1 ? pontos[1].x - pontos[0].x : 1,
               getTitlesWidget: (v, meta) {
                 if (v == maxX) return Text('agora', style: estiloEixo);
-                // perto do fim não cabe (sobrepunha-se ao "agora")
+                // ? perto do fim não cabe (sobrepunha-se ao "agora")
                 if (v > maxX * 0.9) return const SizedBox.shrink();
                 final texto =
                     etiqueta(inicio.add(Duration(minutes: v.toInt())));
@@ -109,13 +115,14 @@ class HistoryChart extends StatelessWidget {
             ),
           ),
         ),
+        // ? sem toque: o gráfico é só para ver, e o toque atrapalhava o scroll
         lineTouchData: const LineTouchData(enabled: false),
         lineBarsData: [
           LineChartBarData(
             spots: pontos,
             color: AppTokens.statusBrand,
             barWidth: 2.5,
-            // ponto só no máximo
+            // ? ponto só no máximo, para chamar a atenção para o pior momento
             dotData: FlDotData(
               show: true,
               checkToShowDot: (spot, bar) => spot == maximo,

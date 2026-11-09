@@ -4,7 +4,11 @@ import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 
-// enum = lista fechada de opções (como as variantes "tom" do Figma)
+// * Etiqueta pequena (componente Chip do Figma): prazos, "Tens tudo",
+// * motivos das compras… O tom diz a urgência pela cor; o texto diz o mesmo
+// * em palavras, para não depender só da cor.
+
+// ? enum = lista fechada de opções (como as variantes "tom" do Figma)
 enum TagTom { perigo, aviso, neutro, marca, contorno, contornoHero }
 
 class TagChip extends StatelessWidget {
@@ -17,6 +21,8 @@ class TagChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
+    // ? fundo e borda podem ficar null (sem fundo / sem contorno);
+    // ? corTexto é sempre definido, o compilador garante-o pelo switch
     Color? fundo;
     Color corTexto;
     Color? borda;

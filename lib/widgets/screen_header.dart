@@ -4,7 +4,9 @@ import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 import 'circle_icon_button.dart';
 
-// Cabeçalho do Figma: subtítulo + título, voltar opcional e ações à direita
+// * Cabeçalho do Figma: subtítulo + título, voltar opcional e ações à direita.
+// * Usei este em vez da AppBar do Material porque o Figma tem o título
+// * grande dentro da página, não numa barra colorida
 class ScreenHeader extends StatelessWidget {
   const ScreenHeader({
     super.key,
@@ -29,6 +31,7 @@ class ScreenHeader extends StatelessWidget {
           CircleIconButton(
             icone: Icons.chevron_left,
             tooltip: 'Voltar',
+            // ? volta ao ecrã anterior da pilha do Navigator
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: AppSpacing.midsmall),
@@ -48,7 +51,7 @@ class ScreenHeader extends StatelessWidget {
             ],
           ),
         ),
-        // for dentro da lista: um espaço + a ação, para cada ação
+        // ? for dentro da lista: um espaço + a ação, para cada ação
         for (final acao in acoes) ...[
           const SizedBox(width: AppSpacing.small),
           acao,

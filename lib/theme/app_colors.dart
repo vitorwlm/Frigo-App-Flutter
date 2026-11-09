@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
-// static: usa-se AppColors.primary500 sem criar um objeto
-// Color(0xFF...) = FF opaco + hex do Figma
+// * Paleta do Figma (FOUNDATIONS), com escalas 100–900 como o professor pediu.
+// * Os ecrãs não usam esta classe diretamente: passam pelos AppTokens, para
+// * uma mudança de cor ser feita num só sítio.
+// * static const: usa-se AppColors.primary500 sem criar um objeto e o valor
+// * fica fixo na compilação. Color(0xFF...) = FF opaco + hex do Figma
 class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
 
-  // Primary (teal)
+  // ? Primary (teal) — cor principal da app (500 = #0E7C86)
   static const Color primary100 = Color(0xFFE5F6F7);
   static const Color primary200 = Color(0xFFC4E5E9);
   static const Color primary300 = Color(0xFF99CBD1);
@@ -17,7 +20,7 @@ class AppColors {
   static const Color primary800 = Color(0xFF00363D);
   static const Color primary900 = Color(0xFF002126);
 
-  // Danger (vermelho) = accent no Figma
+  // ? Danger (vermelho) = accent no Figma
   static const Color danger100 = Color(0xFFFFE8E6);
   static const Color danger200 = Color(0xFFFFCBC6);
   static const Color danger300 = Color(0xFFFFA29E);
@@ -28,7 +31,7 @@ class AppColors {
   static const Color danger800 = Color(0xFF790D19);
   static const Color danger900 = Color(0xFF57010C);
 
-  // Gray = neutral no Figma
+  // ? Gray = neutral no Figma
   static const Color gray100 = Color(0xFFF2F5FC);
   static const Color gray200 = Color(0xFFBEC4D1);
   static const Color gray300 = Color(0xFF9BA2B0);
@@ -39,7 +42,7 @@ class AppColors {
   static const Color gray800 = Color(0xFF171D2A);
   static const Color gray900 = Color(0xFF090F1B);
 
-  // Success (verde)
+  // ? Success (verde)
   static const Color success100 = Color(0xFFE6F6EB);
   static const Color success200 = Color(0xFFC2E8CD);
   static const Color success300 = Color(0xFF94D4A9);
@@ -50,7 +53,7 @@ class AppColors {
   static const Color success800 = Color(0xFF154F37);
   static const Color success900 = Color(0xFF0C2E20);
 
-  // Warning (âmbar) = valores do Figma
+  // ? Warning (âmbar) = valores do Figma
   static const Color warning100 = Color(0xFFFFF1C9);
   static const Color warning200 = Color(0xFFFFE19A);
   static const Color warning300 = Color(0xFFFFCB5C);
@@ -61,8 +64,9 @@ class AppColors {
   static const Color warning800 = Color(0xFF5E3D00);
   static const Color warning900 = Color(0xFF3A2500);
 
-  // branco transparente, por cima dos cartões hero
-  // 0x29 = 16 % de opacidade, 0x3D = 24 %
+  // ? branco transparente, por cima dos cartões hero (deixa ver a cor do
+  // ? cartão por baixo, como no Figma)
+  // ? 0x29 = 16 % de opacidade, 0x3D = 24 %
   static const Color white16 = Color(0x29FFFFFF);
   static const Color white24 = Color(0x3DFFFFFF);
 }

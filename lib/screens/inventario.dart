@@ -1,3 +1,10 @@
+// * ECRÃ INVENTÁRIO — 2.º separador da HomeShell (main.dart).
+// * Fluxo: pesquisa + filtros rápidos + botão de filtros (filtros_sheet.dart)
+// * → separador Frigorífico / Acabou → linhas: tocar abre o detalhe (ou o
+// * "É isto?" do confirmar_sheet.dart se a câmara não tem a certeza);
+// * deslizar → Usei / Deitei fora; no Acabou, Comprar → lista de compras.
+// * Ecrãs 05 (lista), 21 (filtros) e 22 (deslizar) do Figma.
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -17,10 +24,10 @@ import 'detalhe_alimento.dart';
 import 'confirmar_sheet.dart';
 import 'filtros_sheet.dart';
 
-// filtros rápidos por baixo da pesquisa
+// ? filtros rápidos por baixo da pesquisa (enum para só haver um ligado)
 enum Rapido { aExpirar, abertos, aConfirmar }
 
-// Ecrãs 05 (lista), 21 (filtros) e 22 (deslizar) do Figma
+// ? StatefulWidget porque guarda a pesquisa, os filtros e o separador
 class Inventario extends StatefulWidget {
   const Inventario({super.key});
 
@@ -29,16 +36,20 @@ class Inventario extends StatefulWidget {
 }
 
 class _InventarioState extends State<Inventario> {
-  // os itens vêm do frigorifico partilhado (os mesmos do Início)
+  // ? os itens vêm do frigorifico partilhado (os mesmos do Início), por isso
+  // ? é só um get e não uma cópia da lista
   List<Item> get _itens => frigorifico.itens;
 
-  // ouve o frigorifico: se o Início mudar algo, este ecrã redesenha-se
+  // ? Ouve o frigorifico com addListener (e não ListenableBuilder) porque o
+  // ? ecrã já é Stateful: se o Início ou o Realtime mudarem algo, redesenha-se
   @override
   void initState() {
     super.initState();
     frigorifico.addListener(_mudou);
   }
 
+  // ! tira o listener ao fechar, senão chamava setState num ecrã que já não
+  // ! existe
   @override
   void dispose() {
     frigorifico.removeListener(_mudou);
@@ -49,10 +60,13 @@ class _InventarioState extends State<Inventario> {
   Local _local = Local.frigorifico;
   String _pesquisa = '';
   Filtros _filtros = Filtros();
-  // null = nenhum filtro rápido ligado
+  // ? null = nenhum filtro rápido ligado
   Rapido? _rapido;
+  // ? cartão da dica de deslizar; desaparece quando se fecha
   bool _dica = true;
 
+  // ? switch sobre o enum: o compilador obriga a tratar todos os casos.
+  // ? certeza < 60 = a câmara não tem a certeza do que viu
   bool _passaRapido(Item i, Rapido? r) {
     switch (r) {
       case null:
@@ -66,11 +80,13 @@ class _InventarioState extends State<Inventario> {
     }
   }
 
+  // ? o número que aparece em cada chip
   int _contarRapido(Rapido r) => _itens
       .where((i) => i.local == _local && _passaRapido(i, r))
       .length;
 
-  // aplica pesquisa e filtros; usada pela lista e pelo botão "Ver N"
+  // ? aplica pesquisa e filtros; recebe os filtros como parâmetro para a
+  // ? folha de filtros conseguir contar o "Ver N" antes de os aplicar
   List<Item> _filtrar(Filtros f, Local local) {
     final lista = _itens.where((i) {
       if (i.local != local) return false;
@@ -87,7 +103,7 @@ class _InventarioState extends State<Inventario> {
       return true;
     }).toList();
 
-    // sort recebe uma função que compara dois itens (negativo = a vem antes)
+    // ? sort recebe uma função que compara dois itens (negativo = a vem antes)
     switch (f.ordem) {
       case Ordem.validade:
         lista.sort((a, b) => a.dias.compareTo(b.dias));
@@ -102,8 +118,9 @@ class _InventarioState extends State<Inventario> {
   int _contar(Local local) =>
       _itens.where((i) => i.local == local).length;
 
-  // ---- ações ----
+  // * ---- ações ----
 
+  // ? Guarda o "antes" para o Anular da snackbar conseguir desfazer
   void _usei(Item item) {
     final int antes = item.quantidade;
     final Local localAntes = item.local;
@@ -128,6 +145,8 @@ class _InventarioState extends State<Inventario> {
     );
   }
 
+  // ? A folha de filtros devolve os filtros novos (ou null se fechou sem
+  // ? aplicar); a função passada conta quantos ficariam, para o botão "Ver N"
   Future<void> _abrirFiltros() async {
     final novos = await mostrarFiltros(
       context,
@@ -138,18 +157,19 @@ class _InventarioState extends State<Inventario> {
   }
 
   Future<void> _abrirDetalhe(Item item) async {
-    // await espera que o ecrã de detalhe feche; pode devolver uma mensagem
+    // ? await espera que o ecrã de detalhe feche; pode devolver uma mensagem
+    // ? (ex.: "Guardado") para mostrar aqui
     final String? mensagem = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (context) => DetalheAlimento(item: item)),
     );
-    // o detalhe pode ter mudado a quantidade: avisa todos os ecrãs
+    // ? o detalhe pode ter mudado a quantidade: avisa todos os ecrãs
     frigorifico.atualizar(item);
-    // mounted = o ecrã ainda existe (pode ter sido fechado durante o await)
+    // ! mounted = o ecrã ainda existe (pode ter sido fechado durante o await)
     if (mensagem != null && mounted) mostrarMensagem(context, mensagem);
   }
 
-  // ---- interface ----
+  // * ---- interface ----
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +189,7 @@ class _InventarioState extends State<Inventario> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ScreenHeader(
+              // TODO: "visto há 2 min" ainda é texto fixo; deve vir da última leitura (frigorifico.ultimaLeitura), como no Início
               subtitulo: '$total alimentos · visto há 2 min',
               titulo: 'Inventário',
               acoes: [
@@ -202,7 +223,8 @@ class _InventarioState extends State<Inventario> {
               ),
             ),
             const SizedBox(height: AppSpacing.small),
-            // Wrap: os chips passam para a linha de baixo se não couberem
+            // ? Wrap e não Row: os chips passam para a linha de baixo se não
+            // ? couberem (ecrãs pequenos ou letra grande)
             Wrap(
               spacing: AppSpacing.small,
               runSpacing: AppSpacing.small,
@@ -229,6 +251,7 @@ class _InventarioState extends State<Inventario> {
               onSelectionChanged: (s) => setState(() => _local = s.first),
             ),
             const SizedBox(height: AppSpacing.small),
+            // ? Expanded para só a lista fazer scroll; a pesquisa fica fixa
             Expanded(
               child: lista.isEmpty
                   ? Center(
@@ -240,7 +263,7 @@ class _InventarioState extends State<Inventario> {
                       ),
                     )
                   : ListView(
-                      // 88 em baixo para o botão Adicionar não tapar a última linha
+                      // ? 88 em baixo para o botão Adicionar não tapar a última linha
                       padding: const EdgeInsets.only(
                         top: AppSpacing.small,
                         bottom: 88,
@@ -254,6 +277,8 @@ class _InventarioState extends State<Inventario> {
     );
   }
 
+  // ? Separador Acabou: só a lista com o botão Comprar (o que acabou é o que
+  // ? é preciso comprar). Separador Frigorífico: secções por urgência.
   List<Widget> _seccoes(List<Item> lista, TextTheme textTheme) {
     if (_local == Local.acabou) {
       return [
@@ -280,7 +305,8 @@ class _InventarioState extends State<Inventario> {
       ];
     }
 
-    // no frigorífico separa o que expira em 4 dias ou menos
+    // ? no frigorífico separa o que expira em 4 dias ou menos, para o mais
+    // ? urgente aparecer primeiro (ODS 12.3)
     final emBreve = lista.where((i) => i.dias <= 4).toList();
     final resto = lista.where((i) => i.dias > 4).toList();
 
@@ -303,6 +329,7 @@ class _InventarioState extends State<Inventario> {
     ];
   }
 
+  // ? ChoiceChip porque só um pode estar ligado de cada vez
   Widget _chipRapido(Rapido r, String texto) {
     return ChoiceChip(
       label: Text('$texto ${_contarRapido(r)}'),
@@ -314,11 +341,12 @@ class _InventarioState extends State<Inventario> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
-      // carregar no que já está ligado desliga-o
+      // ? carregar no que já está ligado desliga-o (volta a null)
       onSelected: (sim) => setState(() => _rapido = sim ? r : null),
     );
   }
 
+  // ? Explica o deslizar, que não se vê à primeira (ecrã 22 do Figma)
   Widget _cartaoDica(TextTheme textTheme) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
@@ -351,15 +379,17 @@ class _InventarioState extends State<Inventario> {
     );
   }
 
-  // Linha que se pode deslizar (ecrã 22)
+  // ? Linha que se pode deslizar (ecrã 22). Dismissible porque já traz o
+  // ? gesto e os fundos de cada lado; deslizar é mais rápido do que abrir menus
   Widget _linha(Item item) {
     final EstadoValidade estado = estadoDe(item.dias);
     final textTheme = Theme.of(context).textTheme;
 
     return Dismissible(
-      // a key tem de ser única e estável: usa o id, nunca o índice
+      // ! a key tem de ser única e estável: usa o id, nunca o índice (com o
+      // ! índice, ao filtrar, o Flutter confundia as linhas)
       key: ValueKey(item.id),
-      // fundo ao deslizar para a direita
+      // ? fundo ao deslizar para a direita (Usei)
       background: Container(
         color: AppTokens.bgTonal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mid),
@@ -376,7 +406,7 @@ class _InventarioState extends State<Inventario> {
           ],
         ),
       ),
-      // fundo ao deslizar para a esquerda
+      // ? fundo ao deslizar para a esquerda (Deitei fora)
       secondaryBackground: Container(
         color: AppTokens.bgDanger,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.mid),
@@ -393,8 +423,9 @@ class _InventarioState extends State<Inventario> {
           ],
         ),
       ),
-      // decide o que fazer; false = a linha volta ao sítio
-      // (se o alimento mudar de separador, a lista atualiza sozinha)
+      // ? decide o que fazer; devolve sempre false para a linha voltar ao
+      // ? sítio: quem a tira da lista é o frigorifico (se o alimento acabar,
+      // ? passa para o Acabou e a lista atualiza sozinha)
       confirmDismiss: (direcao) async {
         if (direcao == DismissDirection.startToEnd) {
           _usei(item);
@@ -417,7 +448,8 @@ class _InventarioState extends State<Inventario> {
           tom: tomDe(estado),
         ),
         trailing: const Icon(Icons.chevron_right),
-        // a câmara não tem a certeza: pergunta primeiro o que é (ecrã 12)
+        // ? a câmara não tem a certeza: pergunta primeiro o que é (ecrã 12),
+        // ? para o inventário não ficar com nomes errados
         onTap: () => item.certeza < 60
             ? mostrarConfirmar(context, item)
             : _abrirDetalhe(item),

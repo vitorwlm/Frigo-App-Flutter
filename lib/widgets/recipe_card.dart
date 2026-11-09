@@ -6,7 +6,10 @@ import '../theme/app_tokens.dart';
 import 'app_card.dart';
 import 'tag_chip.dart';
 
-// tom=marca quando tens tudo, tom=aviso quando falta um ingrediente
+// * Cartão de receita (Início e lista das Receitas). Recebe textos e não a
+// * Receita, para dar para usar na Galeria com dados inventados.
+
+// ? tom=marca quando tens tudo, tom=aviso quando falta um ingrediente
 enum ReceitaTom { marca, aviso }
 
 class RecipeCard extends StatelessWidget {
@@ -23,10 +26,11 @@ class RecipeCard extends StatelessWidget {
 
   final String titulo;
   final String descricao;
-  // texto do primeiro chip: "Tens tudo", "Falta farinha"…
+  // ? texto do primeiro chip: "Tens tudo", "Falta farinha"…
   final String estado;
   final int minutos;
   final ReceitaTom tom;
+  // ? nas Receitas a lista fica mais limpa sem o texto [foto]
   final bool mostrarFoto;
   final VoidCallback? onTap;
 
@@ -42,7 +46,8 @@ class RecipeCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // lugar da foto da receita
+            // ? lugar da foto da receita (ainda não há fotos); a cor já diz
+            // ? se tens tudo (teal) ou se falta algo (âmbar)
             Container(
               width: 88,
               color: aviso ? AppTokens.bgWarning : AppTokens.bgTonal,
@@ -82,7 +87,7 @@ class RecipeCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.small),
-                    // Wrap passa os chips para a linha de baixo se não couberem
+                    // ? Wrap passa os chips para a linha de baixo se não couberem
                     Wrap(
                       spacing: AppSpacing.small,
                       runSpacing: AppSpacing.small,

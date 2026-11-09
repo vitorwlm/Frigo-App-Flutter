@@ -1,3 +1,10 @@
+// * ECRÃ DEFINIÇÕES (ecrã 14 do Figma). Abre pela roda dentada do Início
+// * (ou pela regra de aviso nos Avisos).
+// * Secções: Avisos (dias de antecedência, resumo diário) → Frigorífico
+// * (temperatura-alvo, Câmara → Ligar ao frigorífico) → Demonstração (simular
+// * estados, alimentos de exemplo) → Conta (Administração só para o admin,
+// * Terminar sessão → volta ao Login).
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -10,9 +17,12 @@ import '../widgets/screen_header.dart';
 import '../widgets/section_title.dart';
 import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
+import 'admin.dart';
 import 'onboarding.dart';
 
 
+// ? texto de cada estado para os chips da Demonstração; switch para o
+// ? compilador avisar se aparecer um estado novo
 String _nomeEstado(EstadoFrigu e) {
   switch (e) {
     case EstadoFrigu.ok:
@@ -26,7 +36,8 @@ String _nomeEstado(EstadoFrigu e) {
   }
 }
 
-// Ecrã 14 do Figma
+// ? StatelessWidget: as definições estão no frigorifico (o Início e os
+// ? Avisos usam os mesmos valores)
 class Definicoes extends StatelessWidget {
   const Definicoes({super.key});
 
@@ -37,7 +48,7 @@ class Definicoes extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        // redesenha quando uma definição muda
+        // ? redesenha quando uma definição muda
         child: ListenableBuilder(
           listenable: frigorifico,
           builder: (context, _) {
@@ -58,7 +69,7 @@ class Definicoes extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.midsmall),
 
-                // ---- Avisos ----
+                // * ---- Avisos ----
                 const SectionTitle(titulo: 'Avisos'),
                 const SizedBox(height: AppSpacing.midsmall),
                 ListCard(
@@ -73,9 +84,12 @@ class Definicoes extends StatelessWidget {
                             style: textTheme.labelLarge,
                           ),
                           const SizedBox(height: AppSpacing.small),
+                          // ? SegmentedButton porque são só 3 opções e vê-se
+                          // ? logo qual está escolhida.
+                          // TODO: diasAviso e resumoDiario ainda só ficam na memória (voltam ao padrão ao reabrir a app)
                           SegmentedButton<int>(
                             showSelectedIcon: false,
-                            // ocupa a largura toda
+                            // ? ocupa a largura toda
                             expandedInsets: EdgeInsets.zero,
                             segments: const [
                               ButtonSegment(value: 1, label: Text('1 dia')),
@@ -98,7 +112,8 @@ class Definicoes extends StatelessWidget {
                         value: frigorifico.resumoDiario,
                         onChanged: frigorifico.mudarResumoDiario,
                       ),
-                      // tocar na linha também liga/desliga
+                      // ? tocar na linha também liga/desliga (alvo maior que
+                      // ? o Switch sozinho)
                       onTap: () => frigorifico.mudarResumoDiario(
                         !frigorifico.resumoDiario,
                       ),
@@ -107,7 +122,7 @@ class Definicoes extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.midsmall),
 
-                // ---- Frigorífico ----
+                // * ---- Frigorífico ----
                 const SectionTitle(titulo: 'Frigorífico'),
                 const SizedBox(height: AppSpacing.midsmall),
                 ListCard(
@@ -131,7 +146,8 @@ class Definicoes extends StatelessWidget {
                       titulo: 'Câmara',
                       detalhe: 'Tira uma foto quando a porta fecha',
                       trailing: seta,
-                      // reabre o passo do Wi-Fi do onboarding
+                      // ? reabre o passo do Wi-Fi do onboarding, em vez de
+                      // ? ter um 2.º ecrã igual
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -144,8 +160,9 @@ class Definicoes extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.midsmall),
 
-                // ---- Demonstração ----
-                // muda os sensores falsos para ver os 4 estados do Início
+                // * ---- Demonstração ----
+                // * muda os sensores falsos para ver os 4 estados do Início:
+                // * serve para testar e para a apresentação sem a placa ligada
                 const SectionTitle(titulo: 'Demonstração'),
                 const SizedBox(height: AppSpacing.midsmall),
                 ListCard(
@@ -193,7 +210,7 @@ class Definicoes extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.midsmall),
 
-                // ---- Conta ----
+                // * ---- Conta ----
                 const SectionTitle(titulo: 'Conta'),
                 const SizedBox(height: AppSpacing.midsmall),
                 ListCard(
@@ -206,6 +223,18 @@ class Definicoes extends StatelessWidget {
                         tom: frigorifico.eAdmin ? TagTom.marca : TagTom.neutro,
                       ),
                     ),
+                    // ! só o admin vê a Administração (e mesmo que alguém lá
+                    // ! chegasse, o RLS do Supabase não o deixava escrever)
+                    if (frigorifico.eAdmin)
+                      ItemRow(
+                        titulo: 'Administração',
+                        detalhe: 'Receitas e validades por categoria',
+                        trailing: seta,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Admin()),
+                        ),
+                      ),
                     ItemRow(
                       titulo: 'Terminar sessão',
                       corTitulo: AppTokens.textDanger,
@@ -221,7 +250,8 @@ class Definicoes extends StatelessWidget {
     );
   }
 
-  // Folha com um RangeSlider para escolher o mínimo e o máximo
+  // ? Folha com um RangeSlider para escolher o mínimo e o máximo (um só
+  // ? slider com 2 pontas, em vez de 2 campos de texto)
   void _mudarTemperatura(BuildContext context) {
     RangeValues valores = RangeValues(frigorifico.alvoMin, frigorifico.alvoMax);
 
@@ -232,7 +262,7 @@ class Definicoes extends StatelessWidget {
       showDragHandle: true,
       builder: (context) {
         final textTheme = Theme.of(context).textTheme;
-        // StatefulBuilder: setState só para esta folha
+        // ? StatefulBuilder: setState só para esta folha
         return StatefulBuilder(
           builder: (context, setFolha) => SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
@@ -257,10 +287,11 @@ class Definicoes extends StatelessWidget {
                   values: valores,
                   min: 0,
                   max: 8,
-                  // passos de 0,5 °C
+                  // ? 0 a 8 °C em passos de 0,5 °C (16 divisões)
                   divisions: 16,
                   onChanged: (v) {
-                    // pelo menos 1 °C entre o mínimo e o máximo
+                    // ? pelo menos 1 °C entre o mínimo e o máximo, igual à
+                    // ? histerese de ±1 °C do termóstato da placa
                     if (v.end - v.start >= 1) setFolha(() => valores = v);
                   },
                 ),
@@ -275,7 +306,8 @@ class Definicoes extends StatelessWidget {
                   texto: 'Guardar',
                   expandir: true,
                   onPressed: () async {
-                    // guarda o messenger antes de fechar a folha
+                    // ? guarda o messenger antes de fechar a folha: depois do
+                    // ? pop o context da folha já não serve para a snackbar
                     final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(context);
                     final erro =
@@ -294,7 +326,8 @@ class Definicoes extends StatelessWidget {
   }
 
   Future<void> _terminarSessao(BuildContext context) async {
-    // showDialog devolve o valor passado ao Navigator.pop
+    // ? pergunta primeiro porque sair obriga a voltar a escrever a
+    // ? palavra-passe; showDialog devolve o valor passado ao Navigator.pop
     final bool? sim = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -315,9 +348,10 @@ class Definicoes extends StatelessWidget {
         ],
       ),
     );
-    // mounted = o ecrã ainda existe depois do await
+    // ! mounted = o ecrã ainda existe depois do await
     if (sim == true && context.mounted) {
-      // fecha os ecrãs por cima: o _PortaoLogin do main.dart mostra o Login
+      // ? fecha os ecrãs por cima: o _PortaoLogin do main.dart mostra o Login
+      // ? sozinho quando a sessão acaba
       Navigator.popUntil(context, (rota) => rota.isFirst);
       await frigorifico.sair();
     }

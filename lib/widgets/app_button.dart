@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-// as variantes "type" e os 3 conjuntos (primary, accent, neutral) do Figma
+// * Botão do sistema de design (componente Botão do Figma). Uso este em vez
+// * de FilledButton/TextButton soltos para todos os botões terem as mesmas
+// * cores e tamanhos. Usado em quase todos os ecrãs.
+
+// ? as variantes "type" e os 3 conjuntos (primary, accent, neutral) do Figma;
+// ? dois enums porque tipo e cor combinam-se (ex.: stroke + accent)
 enum BotaoTipo { fill, tonal, ghost, stroke }
 
 enum BotaoCor { primary, accent, neutral }
@@ -20,17 +25,17 @@ class AppButton extends StatelessWidget {
   });
 
   final String texto;
-  // null = botão desativado
+  // ? null = botão desativado (o Flutter pinta-o a cinzento sozinho)
   final VoidCallback? onPressed;
   final BotaoTipo tipo;
   final BotaoCor cor;
   final IconData? icone;
-  // true = ocupa a largura toda
+  // ? true = ocupa a largura toda
   final bool expandir;
 
   @override
   Widget build(BuildContext context) {
-    // conteúdo igual para todos: ícone opcional + texto
+    // ? conteúdo igual para todos: ícone opcional + texto
     final Widget conteudo = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -42,13 +47,16 @@ class AppButton extends StatelessWidget {
       ],
     );
 
+    // ? cada tipo usa o botão do Material que já tem esse aspeto; aqui só
+    // ? mudam as cores (a forma e a altura vêm do app_theme.dart)
     Widget botao;
     switch (tipo) {
       case BotaoTipo.fill:
         Color fundo = AppColors.primary500;
         Color frente = AppColors.white;
         if (cor == BotaoCor.accent) {
-          // danger600 e não 500: o branco sobre o 500 não chega ao contraste mínimo
+          // ? danger600 e não 500: o branco sobre o 500 não chega ao contraste
+          // ? mínimo de acessibilidade
           fundo = AppColors.danger600;
         } else if (cor == BotaoCor.neutral) {
           fundo = AppColors.gray100;
@@ -101,6 +109,7 @@ class AppButton extends StatelessWidget {
         );
     }
 
+    // ? SizedBox com largura infinita = o botão ocupa a largura toda
     if (expandir) {
       return SizedBox(width: double.infinity, child: botao);
     }

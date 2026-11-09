@@ -1,3 +1,9 @@
+// * ECRÃ INÍCIO — 1.º separador da HomeShell (main.dart).
+// * Mostra: saudação + botões Avisos e Definições → cartão do estado do
+// * frigorífico (toca → Histórico da temperatura) → "A expirar" (toca →
+// * detalhe; Usei / ⋮) → receita do dia (toca → detalhe da receita).
+// * Sem scroll de propósito (Figma, 1 nov): o mais urgente cabe num ecrã.
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -21,7 +27,8 @@ import 'detalhe_alimento.dart';
 import 'historico_temperatura.dart';
 import 'receita_detalhe.dart';
 
-// "há 2 min", "há 3 h"
+// ? "há 2 min", "há 3 h": tempo desde a última leitura, para a pessoa saber
+// ? se o que vê é recente
 String _ha(DateTime t) {
   final int min = DateTime.now().difference(t).inMinutes;
   if (min < 1) return 'agora';
@@ -29,11 +36,14 @@ String _ha(DateTime t) {
   return 'há ${min ~/ 60} h';
 }
 
+// ? StatelessWidget porque não guarda estado: os dados vêm todos do frigorifico
 class Homepage extends StatelessWidget {
   const Homepage({super.key});
 
-  // ---- ações ----
+  // * ---- ações ----
 
+  // ? Botão "Usei": tira 1 e mostra a snackbar com Anular. Guarda o "antes"
+  // ? primeiro, porque o Anular precisa de saber para onde voltar
   void _usei(BuildContext context, Item item) {
     final int antes = item.quantidade;
     final Local localAntes = item.local;
@@ -47,16 +57,20 @@ class Homepage extends StatelessWidget {
     );
   }
 
+  // ? Abre o detalhe e espera que feche: o detalhe pode devolver uma
+  // ? mensagem (ex.: "Guardado") para mostrar aqui numa snackbar
   Future<void> _abrirDetalhe(BuildContext context, Item item) async {
     final String? mensagem = await Navigator.push<String>(
       context,
       MaterialPageRoute(builder: (context) => DetalheAlimento(item: item)),
     );
     frigorifico.atualizar(item);
+    // ! context.mounted: depois do await o ecrã pode já ter fechado
     if (mensagem != null && context.mounted) mostrarMensagem(context, mensagem);
   }
 
-  // menu do botão ⋮ de cada linha
+  // ? menu do botão ⋮ de cada linha. Bottom sheet em vez de mais botões na
+  // ? linha, para a linha não ficar cheia (o Usei é o mais usado)
   void _maisOpcoes(BuildContext context, Item item) {
     showModalBottomSheet<void>(
       context: context,
@@ -71,6 +85,7 @@ class Homepage extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.info_outline),
               title: const Text('Ver detalhes'),
+              // ? fecha a folha primeiro e usa o context do ecrã, não o da folha
               onTap: () {
                 Navigator.pop(folha);
                 _abrirDetalhe(context, item);
@@ -105,10 +120,11 @@ class Homepage extends StatelessWidget {
     );
   }
 
-  // ---- interface ----
+  // * ---- interface ----
 
   @override
   Widget build(BuildContext context) {
+    // ? a saudação muda com a hora do dia
     final int hora = DateTime.now().hour;
     String saudacao;
     if (hora < 12) {
@@ -119,11 +135,13 @@ class Homepage extends StatelessWidget {
       saudacao = 'Boa noite,';
     }
 
-    // ListenableBuilder redesenha o ecrã sempre que o frigorifico avisa
+    // ? ListenableBuilder redesenha o ecrã sempre que o frigorifico avisa
+    // ? (ex.: chegou uma leitura nova pelo Realtime)
     return ListenableBuilder(
       listenable: frigorifico,
       builder: (context, _) {
         final aExpirar = frigorifico.aExpirar;
+        // ? o número no sino só conta os urgentes (hoje ou amanhã)
         final int urgentes = aExpirar.where((i) => i.dias <= 1).length;
         final receita = frigorifico.receitaDoDia;
         final textTheme = Theme.of(context).textTheme;
@@ -134,6 +152,7 @@ class Homepage extends StatelessWidget {
               AppSpacing.midsmall,
               AppSpacing.midsmall,
               AppSpacing.midsmall,
+              // ? 88 em baixo para o botão flutuante não tapar a última linha
               88,
             ),
             children: [
@@ -163,12 +182,13 @@ class Homepage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.midsmall),
-              // o Supabase falhou (ex.: SQL por correr): avisa e usa os falsos
+              // ? o Supabase falhou (ex.: SQL por correr): avisa em vez de
+              // ? mostrar dados de exemplo como se fossem verdadeiros
               if (!frigorifico.naNuvem && frigorifico.erroNuvem != null) ...[
                 AppCard(
                   child: Text(
-                    'Não foi possível ler o Supabase. A mostrar dados de '
-                    'exemplo.\n${frigorifico.erroNuvem}',
+                    'Não foi possível ler o Supabase.\n'
+                    '${frigorifico.erroNuvem}',
                     style: textTheme.bodySmall?.copyWith(
                       color: AppTokens.textDanger,
                     ),
@@ -177,7 +197,7 @@ class Homepage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.midsmall),
               ],
               _HeroInicio(
-                // o estado vem dos sensores (Demonstração nas Definições)
+                // ? o estado vem dos sensores (ou da Demonstração nas Definições)
                 estado: frigorifico.estado,
                 total: frigorifico.totalEmCasa,
                 onAbrir: () => Navigator.push(
@@ -205,7 +225,10 @@ class Homepage extends StatelessWidget {
                     for (final item in aExpirar) _linha(context, item),
                   ],
                 ),
-              if (frigorifico.estado != EstadoFrigu.temperaturaAlta) ...[
+              // ? sem receitas na base de dados não mostra a secção; com a
+              // ? temperatura alta também não, para o foco ficar no problema
+              if (receita != null &&
+                  frigorifico.estado != EstadoFrigu.temperaturaAlta) ...[
                 const SizedBox(height: AppSpacing.mid),
                 const SectionTitle(titulo: 'Cozinha isto hoje'),
                 const SizedBox(height: AppSpacing.small),
@@ -229,6 +252,8 @@ class Homepage extends StatelessWidget {
     );
   }
 
+  // ? Uma linha de "A expirar": a cor e a etiqueta vêm dos dias que faltam
+  // ? (estadoDe, prazoDe e tomDe estão no item_row.dart)
   Widget _linha(BuildContext context, Item item) {
     final EstadoValidade estado = estadoDe(item.dias);
     return ItemRow(
@@ -258,7 +283,9 @@ class Homepage extends StatelessWidget {
   }
 }
 
-// Cartão de cima do Início, muda conforme o estado
+// ? Cartão de cima do Início, muda conforme o estado (ecrãs 01, 02, 13, 19).
+// ? Começa com os valores do estado "ok" e o switch só muda o que é diferente,
+// ? para não repetir tudo em cada caso
 class _HeroInicio extends StatelessWidget {
   const _HeroInicio({
     required this.estado,
@@ -273,6 +300,7 @@ class _HeroInicio extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    // ? atalho porque todo o texto do cartão é branco
     TextStyle? branco(TextStyle? s) => s?.copyWith(color: AppTokens.textOnHero);
 
     Color cor = AppTokens.heroOk;
@@ -317,6 +345,7 @@ class _HeroInicio extends StatelessWidget {
         mensagem =
             'Última leitura ${_ha(f.ultimaLeitura)} · a lista pode estar desatualizada';
         botao = 'Tentar ligar de novo';
+        // ? async porque espera pela placa antes de dizer "Ligado de novo"
         acao = () async {
           mostrarMensagem(context, 'A ligar ao Frigu…');
           await f.reconectar();
@@ -327,6 +356,7 @@ class _HeroInicio extends StatelessWidget {
         pilula = 'Porta aberta';
         icone = Icons.door_front_door_outlined;
         link = '';
+        // ! porque neste estado portaAbertaDesde nunca é null
         final int aberta =
             DateTime.now().difference(f.portaAbertaDesde!).inMinutes;
         numero = '$aberta min';
@@ -366,6 +396,8 @@ class _HeroInicio extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(
+                // ? baseline para o número grande e a unidade ficarem na mesma
+                // ? linha de texto, como no Figma
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,

@@ -1,3 +1,9 @@
+// * ECRÃ DETALHE DO ALIMENTO (ecrã 06 do Figma).
+// * Abre a partir do Início ou do Inventário (Navigator.push com o item).
+// * Fluxo: ver validade → mudar quantidade / aberto → Editar (folha) →
+// * receitas que o usam → Usei tudo / Deitei fora. Ao sair devolve uma
+// * mensagem com Navigator.pop, e quem abriu mostra-a e grava o item.
+
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -20,9 +26,11 @@ const List<String> _meses = [
   'jul', 'ago', 'set', 'out', 'nov', 'dez',
 ];
 
+// ? "6 nov": formato curto à mão, para não precisar do pacote intl só para isto
 String _data(DateTime d) => '${d.day} ${_meses[d.month - 1]}';
 
-// Ecrã 06 do Figma. Muda o item recebido e, ao sair, devolve uma mensagem.
+// ? Recebe o próprio Item (não uma cópia): os + / − e o Aberto mudam-no logo,
+// ? e quem abriu o ecrã chama frigorifico.atualizar(item) para gravar.
 class DetalheAlimento extends StatefulWidget {
   const DetalheAlimento({super.key, required this.item});
 
@@ -33,13 +41,15 @@ class DetalheAlimento extends StatefulWidget {
 }
 
 class _DetalheAlimentoState extends State<DetalheAlimento> {
-  // widget.item = o item passado ao construtor
+  // ? widget.item = o item passado ao construtor; o get só encurta o nome
   Item get item => widget.item;
 
+  // ? + / − de 1 em 1 nas unidades e de 50 em 50 nas gramas
   int get _passo => item.porUnidade ? 1 : 50;
 
   List<Receita> get _receitas {
-    // receitas com um ingrediente que tenha a 1.ª palavra do nome do alimento
+    // ? receitas com um ingrediente que tenha a 1.ª palavra do nome do alimento
+    // ? ("Iogurte natural" → "iogurte"), para sugerir onde o gastar
     final String chave = item.nome.split(' ').first.toLowerCase();
     return frigorifico.receitas
         .where((r) => r.ingredientes.any(
@@ -49,9 +59,12 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
         .toList();
   }
 
+  // ? pop com uma mensagem: quem abriu este ecrã mostra-a numa snackbar
   void _sair(String mensagem) => Navigator.pop(context, mensagem);
 
-  // Folha para corrigir o que a câmara leu: nome, validade e categoria
+  // ? Folha para corrigir o que a câmara leu: nome, validade e categoria.
+  // ? Usa variáveis locais e só muda o item se carregar Guardar, para fechar
+  // ? a folha a deslizar não estragar nada
   Future<void> _editar() async {
     final nome = TextEditingController(text: item.nome);
     DateTime validade = item.validade;
@@ -63,11 +76,13 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
       useSafeArea: true,
       showDragHandle: true,
       backgroundColor: AppTokens.bgApp,
+      // ? StatefulBuilder dá um setState só para a folha (setFolha), porque a
+      // ? folha não é um widget meu com State
       builder: (folha) => StatefulBuilder(
         builder: (folha, setFolha) {
           final textTheme = Theme.of(folha).textTheme;
           return Padding(
-            // sobe a folha quando o teclado abre
+            // ! sobe a folha quando o teclado abre, senão o teclado tapava o campo
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(folha).viewInsets.bottom,
             ),
@@ -90,7 +105,8 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                     decoration: const InputDecoration(labelText: 'Nome'),
                   ),
                   const SizedBox(height: AppSpacing.midsmall),
-                  // DropdownButtonFormField = lista com o aspeto de um campo
+                  // ! DropdownButtonFormField = lista com o aspeto de um campo.
+                  // ! Categoria fora da lista vira 'Outros' (senão dava erro)
                   DropdownButtonFormField<String>(
                     initialValue: todasCategorias.contains(categoria)
                         ? categoria
@@ -110,7 +126,7 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                     subtitle: Text(_data(validade)),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () async {
-                      // calendário do Material; devolve null se cancelar
+                      // ? calendário do Material; devolve null se cancelar
                       final escolhida = await showDatePicker(
                         context: folha,
                         initialDate: validade,
@@ -136,6 +152,7 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
       ),
     );
 
+    // ! lê o texto antes do dispose (depois já não dá)
     final String novoNome = nome.text.trim();
     nome.dispose();
     if (guardar != true || novoNome.isEmpty) return;
@@ -145,7 +162,7 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
       validade: validade,
       categoria: categoria,
     );
-    // redesenha este ecrã com os valores novos
+    // ? redesenha este ecrã com os valores novos
     if (mounted) setState(() {});
   }
 
@@ -163,6 +180,7 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
     } else {
       prazo = 'Expira em $dias dias';
     }
+    // ? dias já passados desde que entrou, para a barra de progresso
     final int passados = item.diasTotais - (dias < 0 ? 0 : dias);
     final receitas = _receitas;
 
@@ -238,7 +256,7 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
               ),
             ),
             const SizedBox(height: AppSpacing.midsmall),
-            // Quantidade e aberto
+            // ? Quantidade e aberto: mudam o item logo; grava quando o ecrã fecha
             AppCard(
               padding: EdgeInsets.zero,
               child: Column(
@@ -270,7 +288,8 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                           icone: Icons.remove,
                           tooltip: 'Menos',
                           estilo: CirculoEstilo.contorno,
-                          // null desativa o botão: não desce abaixo de 1 passo
+                          // ? null desativa o botão: não desce abaixo de 1 passo
+                          // ? (para chegar a 0 há o "Usei tudo", que regista o evento)
                           onPressed: item.quantidade > _passo
                               ? () => setState(() => item.quantidade -= _passo)
                               : null,
@@ -301,7 +320,8 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
               ),
             ),
             const SizedBox(height: AppSpacing.midsmall),
-            // Receitas que usam este alimento
+            // ? Receitas que usam este alimento: liga o alimento a expirar a
+            // ? uma forma de o gastar (ODS 12.3)
             if (receitas.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.midsmall),
               AppCard(
@@ -328,7 +348,7 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            // map + join: junta os títulos separados por vírgula
+                            // ? map + join: junta os títulos separados por vírgula
                             receitas.map((r) => r.titulo).join(', '),
                             style: textTheme.labelLarge,
                           ),
@@ -343,7 +363,8 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
           ],
         ),
       ),
-      // botões sempre visíveis em baixo
+      // ? bottomNavigationBar para os botões ficarem sempre visíveis em baixo,
+      // ? mesmo com scroll
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.midsmall),
