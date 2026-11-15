@@ -91,6 +91,7 @@ class _Arranque extends StatefulWidget {
 class _ArranqueState extends State<_Arranque> {
   // ? Future guardado no estado porque, se o criasse dentro do build, o
   // ? FutureBuilder voltava a pedir os dados ao Supabase a cada redesenho
+  //TODO verificar a sintaxe do late final
   late final Future<void> _carregar = frigorifico.carregar();
 
   @override
@@ -126,6 +127,7 @@ class HomeShell extends StatefulWidget {
 }
 
 // ? _ no nome = privado a este ficheiro (ninguém de fora precisa do estado)
+//TODO ver entao pq por _ vs por sem se for indiferente
 class _HomeShellState extends State<HomeShell> {
   int _indice = 0;
 
@@ -139,6 +141,7 @@ class _HomeShellState extends State<HomeShell> {
 
   // ? O botão flutuante muda com o separador: no Início e no Inventário
   // ? adiciona um alimento, nas Compras adiciona à lista; nos outros não há
+  //TODO verificar o porque de Widget?
   Widget? _botaoAdicionar(BuildContext context) {
     if (_indice == 0 || _indice == 1) {
       return FloatingActionButton.extended(

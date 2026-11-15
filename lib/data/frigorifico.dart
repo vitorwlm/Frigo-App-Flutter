@@ -117,6 +117,7 @@ class Frigorifico extends ChangeNotifier {
 
   // ? o que expira em 4 dias ou menos, do mais urgente para o menos
   // ? (cartão "A expirar" do Início)
+  //TODO por o .. sort
   List<Item> get aExpirar =>
       noFrigorifico.where((i) => i.dias <= 4).toList()
         ..sort((a, b) => a.dias.compareTo(b.dias));
@@ -125,6 +126,7 @@ class Frigorifico extends ChangeNotifier {
 
   // ? A melhor receita para hoje (ODS 12.3): tens tudo e aproveita mais
   // ? alimentos a expirar. null quando ainda não há receitas na base de dados
+  //TODO porque Receita?
   Receita? get receitaDoDia {
     if (receitas.isEmpty) return null;
     final candidatas = receitas.where((r) => r.tensTudo(r.pessoasBase)).toList()
@@ -148,28 +150,33 @@ class Frigorifico extends ChangeNotifier {
       item.motivoSaida = 'consumido';
     }
     _guardar(item);
-    eventos.add(Evento(
-      itemId: item.id,
-      nome: item.nome,
-      tipo: TipoEvento.usado,
-      data: DateTime.now(),
-      pesoKg: item.pesoDe(q),
-    ));
+    eventos.add(
+      Evento(
+        itemId: item.id,
+        nome: item.nome,
+        tipo: TipoEvento.usado,
+        data: DateTime.now(),
+        pesoKg: item.pesoDe(q),
+      ),
+    );
     notifyListeners();
   }
 
   void usarTudo(Item item) => usar(item, quantidade: item.quantidade);
 
   void deitarFora(Item item, {String? motivo}) {
-    eventos.add(Evento(
-      itemId: item.id,
-      nome: item.nome,
-      tipo: TipoEvento.deitadoFora,
-      data: DateTime.now(),
-      pesoKg: item.pesoDe(item.quantidade),
-      motivo: motivo ??
-          (item.dias <= 0 ? 'Passou a validade' : 'Estragou-se antes'),
-    ));
+    eventos.add(
+      Evento(
+        itemId: item.id,
+        nome: item.nome,
+        tipo: TipoEvento.deitadoFora,
+        data: DateTime.now(),
+        pesoKg: item.pesoDe(item.quantidade),
+        motivo:
+            motivo ??
+            (item.dias <= 0 ? 'Passou a validade' : 'Estragou-se antes'),
+      ),
+    );
     item.quantidade = 0;
     item.local = Local.acabou;
     item.motivoSaida = 'desperdicado';
@@ -227,15 +234,17 @@ class Frigorifico extends ChangeNotifier {
       return;
     }
     // ? sem Supabase (exemplo): só fica na memória do telemóvel
-    itens.add(Item(
-      id: '${_proximoId++}',
-      nome: nome,
-      quantidade: quantidade,
-      unidade: unidade,
-      validade: hoje.add(Duration(days: dias)),
-      entrada: hoje,
-      categoria: categoria,
-    ));
+    itens.add(
+      Item(
+        id: '${_proximoId++}',
+        nome: nome,
+        quantidade: quantidade,
+        unidade: unidade,
+        validade: hoje.add(Duration(days: dias)),
+        entrada: hoje,
+        categoria: categoria,
+      ),
+    );
     notifyListeners();
   }
 
@@ -244,10 +253,9 @@ class Frigorifico extends ChangeNotifier {
   void cozinhar(Receita r, int pessoas) {
     for (final ing in r.ingredientes) {
       if (ing.despensa) continue;
-      final candidatos = noFrigorifico
-          .where((i) => ingredienteCorresponde(ing, i))
-          .toList()
-        ..sort((a, b) => a.dias.compareTo(b.dias));
+      final candidatos =
+          noFrigorifico.where((i) => ingredienteCorresponde(ing, i)).toList()
+            ..sort((a, b) => a.dias.compareTo(b.dias));
       if (candidatos.isEmpty) continue;
       usar(candidatos.first, quantidade: ing.necessario(pessoas).round());
     }
@@ -363,7 +371,8 @@ class Frigorifico extends ChangeNotifier {
 
   // * ---- editar um alimento (botão Editar do detalhe) ----
 
-  void editar(Item item, {
+  void editar(
+    Item item, {
     required String nome,
     required DateTime validade,
     required String categoria,
@@ -428,7 +437,8 @@ class Frigorifico extends ChangeNotifier {
           .select('nome, role')
           .eq('id', user.id)
           .maybeSingle();
-      nomeUtilizador = (perfil?['nome'] as String?) ??
+      nomeUtilizador =
+          (perfil?['nome'] as String?) ??
           (user.userMetadata?['nome'] as String?) ??
           email.split('@').first;
       eAdmin = perfil?['role'] == 'admin';
@@ -484,8 +494,10 @@ class Frigorifico extends ChangeNotifier {
   // ? dias por categoria (tabela validades, esquema_fase4.sql)
   Future<void> _carregarValidades() async {
     try {
-      final linhas =
-          await supabase.from('validades').select().order('categoria');
+      final linhas = await supabase
+          .from('validades')
+          .select()
+          .order('categoria');
       validades.clear();
       for (final l in linhas) {
         validades[l['categoria'] as String] = l['dias'] as int;
@@ -586,19 +598,23 @@ class Frigorifico extends ChangeNotifier {
     // ? para o gráfico mostrar quanto aqueceu com aquela abertura
     double maxT = temperatura;
     final dia = _resumos['24/30'] ?? [];
-    final perto = dia.where((l) =>
-        !l.$1.isBefore(inicio.subtract(const Duration(minutes: 30))) &&
-        l.$1.isBefore(inicio.add(const Duration(hours: 1))));
+    final perto = dia.where(
+      (l) =>
+          !l.$1.isBefore(inicio.subtract(const Duration(minutes: 30))) &&
+          l.$1.isBefore(inicio.add(const Duration(hours: 1))),
+    );
     if (perto.isNotEmpty) {
       maxT = perto.map((l) => l.$2).reduce((a, b) => a > b ? a : b);
     }
     aberturas.add(AberturaPorta(inicio: inicio, duracao: dur, maxTemp: maxT));
     if (dur.inSeconds > 60) {
-      alertas.add(AlertaSensor(
-        titulo: 'Porta aberta muito tempo',
-        detalhe: 'Esteve aberta ${dur.inMinutes} min',
-        data: inicio,
-      ));
+      alertas.add(
+        AlertaSensor(
+          titulo: 'Porta aberta muito tempo',
+          detalhe: 'Esteve aberta ${dur.inMinutes} min',
+          data: inicio,
+        ),
+      );
     }
   }
 
@@ -706,7 +722,8 @@ class Frigorifico extends ChangeNotifier {
     if (!naNuvem) return 'Entra primeiro na tua conta.';
     try {
       await supabase.from('itens').insert([
-        for (final i in _alimentosDemo()) {...linhaDoItem(i), 'origem': 'manual'},
+        for (final i in _alimentosDemo())
+          {...linhaDoItem(i), 'origem': 'manual'},
       ]);
       await carregar();
       return 'Alimentos de exemplo adicionados';
@@ -828,9 +845,10 @@ class Frigorifico extends ChangeNotifier {
   // ? Guardar serve para criar e para mudar
   Future<String?> guardarValidade(String categoria, int dias) async {
     try {
-      await supabase
-          .from('validades')
-          .upsert({'categoria': categoria, 'dias': dias});
+      await supabase.from('validades').upsert({
+        'categoria': categoria,
+        'dias': dias,
+      });
       validades[categoria] = dias;
       notifyListeners();
       return null;
@@ -863,7 +881,11 @@ class Frigorifico extends ChangeNotifier {
   // * A app muda a lista logo (não fica à espera) e grava no Supabase por trás,
   // * porque no supermercado a internet pode ser fraca e a lista tem de reagir.
 
-  void adicionarCompra(String nome, String motivo, {TagTom tom = TagTom.neutro}) {
+  void adicionarCompra(
+    String nome,
+    String motivo, {
+    TagTom tom = TagTom.neutro,
+  }) {
     // ? não repete o que já está por comprar (o mesmo item pode ser pedido
     // ? pelo Inventário e pelas Receitas)
     final existe = compras.any(
@@ -922,8 +944,11 @@ class Frigorifico extends ChangeNotifier {
 // ? ("ovo") comparam com o início do nome ("Ovos").
 bool ingredienteCorresponde(Ingrediente ing, Item item) {
   final nomeItem = item.nome.toLowerCase();
-  final palavras =
-      ing.nome.toLowerCase().split(' ').where((p) => p.length >= 4).toList();
+  final palavras = ing.nome
+      .toLowerCase()
+      .split(' ')
+      .where((p) => p.length >= 4)
+      .toList();
   if (palavras.isEmpty) return nomeItem.startsWith(ing.nome.toLowerCase());
   return palavras.any((p) => nomeItem.contains(p));
 }
@@ -938,14 +963,85 @@ List<Item> _alimentosDemo() {
   final hoje = DateUtils.dateOnly(DateTime.now());
   DateTime daqui(int dias) => hoje.add(Duration(days: dias));
   return [
-    Item(id: '0', nome: 'Iogurte natural', quantidade: 2, unidade: 'unidades', validade: daqui(0), entrada: hoje, aberto: true, categoria: 'Laticínios', prateleira: 'Prateleira de cima'),
-    Item(id: '0', nome: 'Ovos', quantidade: 6, unidade: 'unidades', validade: daqui(1), entrada: hoje, categoria: 'Ovos'),
-    Item(id: '0', nome: 'Sobras de arroz', quantidade: 1, unidade: 'caixa', validade: daqui(2), entrada: hoje, categoria: 'Sobras'),
-    Item(id: '0', nome: 'Espinafres', quantidade: 200, unidade: 'g', validade: daqui(4), entrada: hoje, categoria: 'Legumes', prateleira: 'Gaveta'),
-    Item(id: '0', nome: 'Queijo fresco', quantidade: 1, unidade: 'unidades', validade: daqui(6), entrada: hoje, categoria: 'Laticínios'),
-    Item(id: '0', nome: 'Leite meio-gordo', quantidade: 1, unidade: 'L', validade: daqui(9), entrada: hoje, aberto: true, categoria: 'Laticínios', prateleira: 'Porta'),
-    Item(id: '0', nome: 'Fiambre', quantidade: 150, unidade: 'g', validade: daqui(5), entrada: hoje, categoria: 'Carne e peixe'),
-    Item(id: '0', nome: 'Iogurte grego', quantidade: 1, unidade: 'unidades', validade: daqui(12), entrada: hoje, categoria: 'Laticínios', prateleira: 'Prateleira de cima', certeza: 54),
+    Item(
+      id: '0',
+      nome: 'Iogurte natural',
+      quantidade: 2,
+      unidade: 'unidades',
+      validade: daqui(0),
+      entrada: hoje,
+      aberto: true,
+      categoria: 'Laticínios',
+      prateleira: 'Prateleira de cima',
+    ),
+    Item(
+      id: '0',
+      nome: 'Ovos',
+      quantidade: 6,
+      unidade: 'unidades',
+      validade: daqui(1),
+      entrada: hoje,
+      categoria: 'Ovos',
+    ),
+    Item(
+      id: '0',
+      nome: 'Sobras de arroz',
+      quantidade: 1,
+      unidade: 'caixa',
+      validade: daqui(2),
+      entrada: hoje,
+      categoria: 'Sobras',
+    ),
+    Item(
+      id: '0',
+      nome: 'Espinafres',
+      quantidade: 200,
+      unidade: 'g',
+      validade: daqui(4),
+      entrada: hoje,
+      categoria: 'Legumes',
+      prateleira: 'Gaveta',
+    ),
+    Item(
+      id: '0',
+      nome: 'Queijo fresco',
+      quantidade: 1,
+      unidade: 'unidades',
+      validade: daqui(6),
+      entrada: hoje,
+      categoria: 'Laticínios',
+    ),
+    Item(
+      id: '0',
+      nome: 'Leite meio-gordo',
+      quantidade: 1,
+      unidade: 'L',
+      validade: daqui(9),
+      entrada: hoje,
+      aberto: true,
+      categoria: 'Laticínios',
+      prateleira: 'Porta',
+    ),
+    Item(
+      id: '0',
+      nome: 'Fiambre',
+      quantidade: 150,
+      unidade: 'g',
+      validade: daqui(5),
+      entrada: hoje,
+      categoria: 'Carne e peixe',
+    ),
+    Item(
+      id: '0',
+      nome: 'Iogurte grego',
+      quantidade: 1,
+      unidade: 'unidades',
+      validade: daqui(12),
+      entrada: hoje,
+      categoria: 'Laticínios',
+      prateleira: 'Prateleira de cima',
+      certeza: 54,
+    ),
   ];
 }
 
@@ -954,7 +1050,11 @@ List<Item> _alimentosDemo() {
 List<Compra> _comprasExemplo() => [
   Compra(nome: 'Manteiga', motivo: 'Acabou no frigorífico'),
   Compra(nome: 'Farinha', motivo: 'Para as panquecas', tom: TagTom.marca),
-  Compra(nome: 'Iogurte natural ×2', motivo: 'Pack mais pequeno', tom: TagTom.aviso),
+  Compra(
+    nome: 'Iogurte natural ×2',
+    motivo: 'Pack mais pequeno',
+    tom: TagTom.aviso,
+  ),
   Compra(nome: 'Tomates', motivo: 'Acabou no frigorífico', noCarrinho: true),
 ];
 
@@ -998,45 +1098,51 @@ List<Evento> _eventosExemplo() {
 
   void usados(int n, int mesAtras) {
     for (int i = 0; i < n; i++) {
-      lista.add(Evento(
-        itemId: 'h$mesAtras-$i',
-        nome: 'Exemplo',
-        tipo: TipoEvento.usado,
-        // ? DateTime corrige sozinho o mês 0 para dezembro do ano anterior;
-        // ? no mês atual, os dias vão só até hoje (nada no futuro)
-        data: DateTime(
-          agora.year,
-          agora.month - mesAtras,
-          1 + i % (mesAtras == 0 ? agora.day : 28),
+      lista.add(
+        Evento(
+          itemId: 'h$mesAtras-$i',
+          nome: 'Exemplo',
+          tipo: TipoEvento.usado,
+          // ? DateTime corrige sozinho o mês 0 para dezembro do ano anterior;
+          // ? no mês atual, os dias vão só até hoje (nada no futuro)
+          data: DateTime(
+            agora.year,
+            agora.month - mesAtras,
+            1 + i % (mesAtras == 0 ? agora.day : 28),
+          ),
+          pesoKg: 0.125,
         ),
-        pesoKg: 0.125,
-      ));
+      );
     }
   }
 
   void fora(String nome, String motivo, int mesAtras, int n) {
-    lista.add(Evento(
-      itemId: 'f$mesAtras-$n',
-      nome: nome,
-      tipo: TipoEvento.deitadoFora,
-      data: DateTime(
-        agora.year,
-        agora.month - mesAtras,
-        mesAtras == 0 ? 1 + n % agora.day : 1 + n,
+    lista.add(
+      Evento(
+        itemId: 'f$mesAtras-$n',
+        nome: nome,
+        tipo: TipoEvento.deitadoFora,
+        data: DateTime(
+          agora.year,
+          agora.month - mesAtras,
+          mesAtras == 0 ? 1 + n % agora.day : 1 + n,
+        ),
+        pesoKg: 0.25,
+        motivo: motivo,
       ),
-      pesoKg: 0.25,
-      motivo: motivo,
-    ));
+    );
   }
 
   // ? ontem: fiambre usado a tempo (aparece nos Avisos)
-  lista.add(Evento(
-    itemId: '7',
-    nome: 'Fiambre',
-    tipo: TipoEvento.usado,
-    data: DateUtils.dateOnly(agora).subtract(const Duration(hours: 4)),
-    pesoKg: 0.05,
-  ));
+  lista.add(
+    Evento(
+      itemId: '7',
+      nome: 'Fiambre',
+      tipo: TipoEvento.usado,
+      data: DateUtils.dateOnly(agora).subtract(const Duration(hours: 4)),
+      pesoKg: 0.05,
+    ),
+  );
 
   // ? este mês: 37 usados, 5 deitados fora (88 %)
   usados(37, 0);

@@ -207,6 +207,7 @@ Future<void> _escreverAMao(BuildContext context) async {
     dias: d,
     categoria: categoria,
   );
-  if (context.mounted)
+  if (context.mounted) {
     mostrarMensagem(context, '${nome.text.trim()} adicionado');
+  }
 }

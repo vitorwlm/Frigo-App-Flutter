@@ -18,9 +18,8 @@ import 'admin.dart';
 
 // ? 1.5 → "1,5"; 100.0 → "100": para o campo mostrar o número como a
 // ? pessoa o escreveria
-String _numero(double v) => v == v.roundToDouble()
-    ? '${v.round()}'
-    : '$v'.replaceAll('.', ',');
+String _numero(double v) =>
+    v == v.roundToDouble() ? '${v.round()}' : '$v'.replaceAll('.', ',');
 
 // ? Os campos de um ingrediente enquanto se edita. Classe à parte porque
 // ? cada ingrediente tem 3 controllers e assim ficam juntos (e são libertados
@@ -82,8 +81,9 @@ class _EditarReceitaState extends State<EditarReceita> {
   // ? late = só é criado quando se usa pela 1.ª vez (aí já há widget), o que
   // ? deixa usar widget.receita sem precisar do initState
   late final _titulo = TextEditingController(text: widget.receita?.titulo);
-  late final _descricao =
-      TextEditingController(text: widget.receita?.descricao);
+  late final _descricao = TextEditingController(
+    text: widget.receita?.descricao,
+  );
   late final _minutos = TextEditingController(
     text: '${widget.receita?.minutos ?? 15}',
   );
@@ -435,16 +435,20 @@ class _EditarReceitaState extends State<EditarReceita> {
                 ),
                 const SizedBox(width: AppSpacing.small),
                 Expanded(
-                  // TODO: se a receita tiver outra unidade (ex.: 'L'), o dropdown dá erro: juntar à lista ou trocar por 'unidades'
                   child: DropdownButtonFormField<String>(
                     initialValue: l.unidade,
                     decoration: _campo('Unidade'),
                     items: const [
-                      DropdownMenuItem(value: 'unidades', child: Text('unidades')),
+                      DropdownMenuItem(
+                        value: 'unidades',
+                        child: Text('unidades'),
+                      ),
                       DropdownMenuItem(value: 'g', child: Text('g')),
                       DropdownMenuItem(value: 'ml', child: Text('ml')),
+                      DropdownMenuItem(value: 'l', child: Text('L')),
                     ],
-                    onChanged: (v) => setState(() => l.unidade = v ?? 'unidades'),
+                    onChanged: (v) =>
+                        setState(() => l.unidade = v ?? 'unidades'),
                   ),
                 ),
               ],
