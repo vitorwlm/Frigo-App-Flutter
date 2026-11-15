@@ -4,7 +4,7 @@
 // * (temperatura-alvo, Câmara → Ligar ao frigorífico) → Demonstração (simular
 // * estados, alimentos de exemplo) → Conta (Administração só para o admin,
 // * Terminar sessão → volta ao Login).
-
+//TODO rever a partir daqui
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -19,7 +19,6 @@ import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
 import 'admin.dart';
 import 'onboarding.dart';
-
 
 // ? texto de cada estado para os chips da Demonstração; switch para o
 // ? compilador avisar se aparecer um estado novo
@@ -172,7 +171,10 @@ class Definicoes extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text('Estado do frigorífico', style: textTheme.labelLarge),
+                          Text(
+                            'Estado do frigorífico',
+                            style: textTheme.labelLarge,
+                          ),
                           const SizedBox(height: AppSpacing.small),
                           if (frigorifico.temLeiturasReais)
                             Text(
@@ -219,7 +221,9 @@ class Definicoes extends StatelessWidget {
                       titulo: frigorifico.nomeUtilizador,
                       detalhe: frigorifico.email,
                       trailing: TagChip(
-                        texto: frigorifico.eAdmin ? 'Administrador' : 'Utilizador',
+                        texto: frigorifico.eAdmin
+                            ? 'Administrador'
+                            : 'Utilizador',
                         tom: frigorifico.eAdmin ? TagTom.marca : TagTom.neutro,
                       ),
                     ),
@@ -232,7 +236,9 @@ class Definicoes extends StatelessWidget {
                         trailing: seta,
                         onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const Admin()),
+                          MaterialPageRoute(
+                            builder: (context) => const Admin(),
+                          ),
                         ),
                       ),
                     ItemRow(
@@ -310,8 +316,10 @@ class Definicoes extends StatelessWidget {
                     // ? pop o context da folha já não serve para a snackbar
                     final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(context);
-                    final erro =
-                        await frigorifico.mudarAlvo(valores.start, valores.end);
+                    final erro = await frigorifico.mudarAlvo(
+                      valores.start,
+                      valores.end,
+                    );
                     if (erro != null) {
                       messenger.showSnackBar(SnackBar(content: Text(erro)));
                     }

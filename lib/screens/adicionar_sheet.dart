@@ -109,6 +109,7 @@ Future<void> _escreverAMao(BuildContext context) async {
   final bool? guardar = await showDialog<bool>(
     context: context,
     // ? StatefulBuilder porque os dropdowns mudam valores dentro da caixa
+    //TODO Rever isto
     builder: (dialogo) => StatefulBuilder(
       builder: (dialogo, setDialogo) => AlertDialog(
         title: const Text('Escrever à mão'),
