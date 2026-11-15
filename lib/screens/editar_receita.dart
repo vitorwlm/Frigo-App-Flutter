@@ -2,7 +2,7 @@
 // * Fluxo: dados gerais → ingredientes por pessoa (Juntar / tirar) → passos
 // * (Juntar / tirar) → Guardar (frigorifico.guardarReceita) ou Apagar.
 // * O mesmo ecrã cria (receita null) e edita, para não ter dois quase iguais.
-
+//TODO verificar a partir daqui.
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -112,6 +112,7 @@ class _EditarReceitaState extends State<EditarReceita> {
     for (final c in _passos) {
       c.dispose();
     }
+    //todo verificar o super
     super.dispose();
   }
 

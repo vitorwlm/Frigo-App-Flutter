@@ -284,7 +284,7 @@ class Definicoes extends StatelessWidget {
                 Text('Temperatura-alvo', style: textTheme.headlineMedium),
                 const SizedBox(height: AppSpacing.small),
                 Text(
-                  '${numeroPt(valores.start)}–${numeroPt(valores.end)} °C',
+                  '${numeroPt(valores.start)}-${numeroPt(valores.end)} °C',
                   style: textTheme.headlineSmall?.copyWith(
                     color: AppTokens.textBrand,
                   ),

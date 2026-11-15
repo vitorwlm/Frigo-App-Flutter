@@ -11,7 +11,7 @@
 // *              → BoasVindas (só depois de criar conta) ou HomeShell
 // * HomeShell = barra de baixo com os 5 separadores:
 // *   Início · Inventário · Receitas · Impacto · Compras
-
+//TODO REVER A PARTIR DE /SCREENS/GALERIA
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
