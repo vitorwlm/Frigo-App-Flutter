@@ -21,11 +21,13 @@ import '../widgets/screen_header.dart';
 import '../widgets/section_title.dart';
 import '../widgets/snack.dart';
 import '../widgets/tag_chip.dart';
+import '../main.dart';
 import 'avisos.dart';
 import 'definicoes.dart';
 import 'detalhe_alimento.dart';
 import 'historico_temperatura.dart';
 import 'receita_detalhe.dart';
+import 'ultima_foto.dart';
 
 // ? "há 2 min", "há 3 h": tempo desde a última leitura, para a pessoa saber
 // ? se o que vê é recente
@@ -200,12 +202,30 @@ class Homepage extends StatelessWidget {
                 // ? o estado vem dos sensores (ou da Demonstração nas Definições)
                 estado: frigorifico.estado,
                 total: frigorifico.totalEmCasa,
-                onAbrir: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HistoricoTemperatura(),
-                  ),
-                ),
+                // ? o link do cartão muda com o estado (como no Figma):
+                // ? Ver foto (18), Histórico (20) ou Ver inventário
+                onAbrir: () {
+                  switch (frigorifico.estado) {
+                    case EstadoFrigu.ok:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UltimaFoto(),
+                        ),
+                      );
+                    case EstadoFrigu.temperaturaAlta:
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HistoricoTemperatura(),
+                        ),
+                      );
+                    case EstadoFrigu.semLigacao:
+                      separadorAtual.value = 1;
+                    case EstadoFrigu.portaAberta:
+                      break;
+                  }
+                },
               ),
               const SizedBox(height: AppSpacing.mid),
               SectionTitle(titulo: 'A expirar', contador: aExpirar.length),
@@ -306,7 +326,7 @@ class _HeroInicio extends StatelessWidget {
     Color cor = AppTokens.heroOk;
     String pilula = 'Tudo bem';
     IconData icone = Icons.check_circle;
-    String link = 'Detalhes';
+    String link = 'Ver foto';
     String numero = '$total';
     String unidade = 'alimentos';
     final f = frigorifico;
@@ -341,7 +361,7 @@ class _HeroInicio extends StatelessWidget {
         cor = AppTokens.heroOffline;
         pilula = 'Sem ligação';
         icone = Icons.wifi_off;
-        link = '';
+        link = 'Ver inventário';
         mensagem =
             'Última leitura ${_ha(f.ultimaLeitura)} · a lista pode estar desatualizada';
         botao = 'Tentar ligar de novo';

@@ -117,6 +117,11 @@ class _ArranqueState extends State<_Arranque> {
   }
 }
 
+// ? Separador aberto na barra de baixo. Fora da classe para outros ecrãs o
+// ? poderem mudar (ex.: "Ver inventário" no cartão do Início sem ligação).
+// ? ValueNotifier = um valor que avisa quem o ouve quando muda.
+final ValueNotifier<int> separadorAtual = ValueNotifier<int>(0);
+
 // * 3.º passo: a "casca" da app, com a barra de baixo e os 5 separadores.
 // * StatefulWidget porque tem de lembrar qual separador está aberto (_indice).
 class HomeShell extends StatefulWidget {
@@ -130,6 +135,21 @@ class HomeShell extends StatefulWidget {
 //TODO ver entao pq por _ vs por sem se for indiferente
 class _HomeShellState extends State<HomeShell> {
   int _indice = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    separadorAtual.value = 0;
+    separadorAtual.addListener(_mudouSeparador);
+  }
+
+  @override
+  void dispose() {
+    separadorAtual.removeListener(_mudouSeparador);
+    super.dispose();
+  }
+
+  void _mudouSeparador() => setState(() => _indice = separadorAtual.value);
 
   final List<Widget> _ecras = const [
     Homepage(),
@@ -169,11 +189,8 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(index: _indice, children: _ecras),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _indice,
-        onDestinationSelected: (i) {
-          setState(() {
-            _indice = i;
-          });
-        },
+        // ? muda o separadorAtual; o _mudouSeparador faz o setState
+        onDestinationSelected: (i) => separadorAtual.value = i,
         // ! tem de estar pela mesma ordem que _ecras (o índice liga os dois)
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Início'),

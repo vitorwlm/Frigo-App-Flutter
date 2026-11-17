@@ -1,6 +1,7 @@
 // * ONBOARDING — só aparece a seguir a criar conta (frigorifico.verBoasVindas).
 // * Fluxo: Boas-vindas (ecrã 15) → Começar → Ligar ao frigorífico (ecrã 16)
-// * → Ligar → irParaApp → HomeShell. O Ligar ao frigorífico também abre pelas
+// * → Ligar → Escolher avisos (ecrã 17) → Concluir → irParaApp → HomeShell.
+// * O Ligar ao frigorífico também abre pelas
 // * Definições (dasDefinicoes), e aí volta atrás no fim.
 
 import 'package:flutter/material.dart';
@@ -234,8 +235,11 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
       Navigator.pop(context);
       messenger.showSnackBar(SnackBar(content: Text('Frigu ligado a $_rede')));
     } else {
-      // ? o passo 3 (Escolher avisos) ainda não existe: segue para a app
-      irParaApp(context);
+      // ? passo 3: escolher quando avisar
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const EscolherAvisos()),
+      );
     }
   }
 
@@ -363,6 +367,130 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
               onPressed: _palavraPasse.text.isEmpty || _aLigar ? null : _ligar,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Ecrã 17 · Escolher avisos (passo 3 de 3)
+// ---------------------------------------------------------------------------
+class EscolherAvisos extends StatelessWidget {
+  const EscolherAvisos({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      body: SafeArea(
+        // ? redesenha quando muda a antecedência ou o resumo
+        child: ListenableBuilder(
+          listenable: frigorifico,
+          builder: (context, _) {
+            final int dias = frigorifico.diasAviso;
+            final bool resumo = frigorifico.resumoDiario;
+
+            // ? exemplo do aviso com um alimento que já tens; sem nenhum,
+            // ? usa o do Figma
+            final aAvisar = frigorifico.aExpirar
+                .where((i) => i.dias <= dias)
+                .toList();
+            String exemplo = 'Iogurte natural expira amanhã';
+            EstadoValidade estado = EstadoValidade.perigo;
+            if (aAvisar.isNotEmpty) {
+              final i = aAvisar.first;
+              final quando = i.dias <= 0
+                  ? 'hoje'
+                  : (i.dias == 1 ? 'amanhã' : 'em ${i.dias} dias');
+              exemplo = '${i.nome} expira $quando';
+              estado = estadoDe(i.dias);
+            }
+
+            return Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.midsmall,
+                      AppSpacing.midsmall,
+                      AppSpacing.midsmall,
+                      AppSpacing.mid,
+                    ),
+                    children: [
+                      const ScreenHeader(
+                        subtitulo: 'Passo 3 de 3',
+                        titulo: 'Quando queres ser avisado?',
+                        voltar: true,
+                      ),
+                      const SizedBox(height: AppSpacing.midsmall),
+                      // ? os mesmos controlos das Definições (mesmos dados)
+                      ListCard(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(AppSpacing.midsmall),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  'Avisar-me com antecedência de',
+                                  style: textTheme.labelLarge,
+                                ),
+                                const SizedBox(height: AppSpacing.small),
+                                SegmentedButton<int>(
+                                  showSelectedIcon: false,
+                                  expandedInsets: EdgeInsets.zero,
+                                  segments: const [
+                                    ButtonSegment(value: 1, label: Text('1 dia')),
+                                    ButtonSegment(value: 2, label: Text('2 dias')),
+                                    ButtonSegment(value: 3, label: Text('3 dias')),
+                                  ],
+                                  selected: {dias},
+                                  onSelectionChanged: (s) =>
+                                      frigorifico.mudarDiasAviso(s.first),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ItemRow(
+                            titulo: 'Resumo diário às 8:00',
+                            detalhe: dias == 1
+                                ? 'O que expira amanhã'
+                                : 'O que expira nos próximos $dias dias',
+                            trailing: Switch(
+                              value: resumo,
+                              onChanged: frigorifico.mudarResumoDiario,
+                            ),
+                            onTap: () => frigorifico.mudarResumoDiario(!resumo),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.midsmall),
+                      const SectionTitle(titulo: 'Vais receber assim'),
+                      const SizedBox(height: AppSpacing.midsmall),
+                      ListCard(
+                        children: [
+                          ItemRow(
+                            titulo: exemplo,
+                            detalhe: resumo
+                                ? 'Frigu · 8:00'
+                                : 'Frigu · $dias ${dias == 1 ? 'dia' : 'dias'} antes',
+                            estado: estado,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                _Rodape(
+                  passo: 2,
+                  texto: 'Concluir',
+                  onPressed: () => irParaApp(context),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
