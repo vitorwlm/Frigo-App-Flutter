@@ -102,11 +102,23 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
             // ? tempo, dificuldade e quantos alimentos a expirar salva
             Row(
               children: [
-                _Resumo(icone: Icons.schedule, valor: '${r.minutos} min', legenda: 'tempo'),
+                _Resumo(
+                  icone: Icons.schedule,
+                  valor: '${r.minutos} min',
+                  legenda: 'tempo',
+                ),
                 const SizedBox(width: AppSpacing.small),
-                _Resumo(icone: Icons.restaurant_menu, valor: r.dificuldade, legenda: 'dificuldade'),
+                _Resumo(
+                  icone: Icons.restaurant_menu,
+                  valor: r.dificuldade,
+                  legenda: 'dificuldade',
+                ),
                 const SizedBox(width: AppSpacing.small),
-                _Resumo(icone: Icons.eco_outlined, valor: '${r.salva}', legenda: 'a expirar salvos'),
+                _Resumo(
+                  icone: Icons.eco_outlined,
+                  valor: '${r.salva}',
+                  legenda: 'a expirar salvos',
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.midsmall),
@@ -126,8 +138,9 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
                     icone: Icons.remove,
                     tooltip: 'Menos pessoas',
                     estilo: CirculoEstilo.contorno,
-                    onPressed:
-                        _pessoas > 1 ? () => setState(() => _pessoas--) : null,
+                    onPressed: _pessoas > 1
+                        ? () => setState(() => _pessoas--)
+                        : null,
                   ),
                   SizedBox(
                     width: 40,
@@ -141,8 +154,9 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
                     icone: Icons.add,
                     tooltip: 'Mais pessoas',
                     estilo: CirculoEstilo.contorno,
-                    onPressed:
-                        _pessoas < 12 ? () => setState(() => _pessoas++) : null,
+                    onPressed: _pessoas < 12
+                        ? () => setState(() => _pessoas++)
+                        : null,
                   ),
                 ],
               ),
@@ -158,8 +172,8 @@ class _ReceitaDetalheState extends State<ReceitaDetalhe> {
                     estado: i.despensa
                         ? EstadoValidade.marca
                         : (i.dias == null
-                            ? EstadoValidade.nenhum
-                            : estadoDe(i.dias!)),
+                              ? EstadoValidade.nenhum
+                              : estadoDe(i.dias!)),
                     trailing: _chip(i),
                   ),
               ],

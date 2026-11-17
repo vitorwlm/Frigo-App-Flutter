@@ -46,7 +46,10 @@ class MarcarCirculo extends StatelessWidget {
 void mostrarConfirmar(BuildContext context, Item item) {
   // ? palpites do Gemini: o principal + as alternativas, num só Map para os
   // ? mostrar todos na mesma lista
-  final Map<String, int> palpites = {item.nome: item.certeza, ...item.alternativas};
+  final Map<String, int> palpites = {
+    item.nome: item.certeza,
+    ...item.alternativas,
+  };
   String escolhido = item.nome;
 
   showModalBottomSheet<void>(
@@ -92,8 +95,11 @@ void mostrarConfirmar(BuildContext context, Item item) {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.photo_camera_outlined,
-                          size: 32, color: AppTokens.textBrand),
+                      const Icon(
+                        Icons.photo_camera_outlined,
+                        size: 32,
+                        color: AppTokens.textBrand,
+                      ),
                       const SizedBox(height: AppSpacing.small),
                       Text(
                         'Foto da câmara',
@@ -166,8 +172,11 @@ void mostrarConfirmar(BuildContext context, Item item) {
                   onPressed: () {
                     Navigator.pop(folha);
                     final int i = frigorifico.remover(item);
-                    mostrarAnular(context, '${item.nome} removido',
-                        () => frigorifico.inserir(i, item));
+                    mostrarAnular(
+                      context,
+                      '${item.nome} removido',
+                      () => frigorifico.inserir(i, item),
+                    );
                   },
                 ),
               ],

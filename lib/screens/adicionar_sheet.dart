@@ -11,7 +11,7 @@ import 'filtros_sheet.dart';
 
 // * FOLHA "ADICIONAR ALIMENTO" (ecrã 03 do Figma).
 // * Abre pelo botão flutuante Adicionar do Início e do Inventário (main.dart).
-// * Fluxo: Tirar foto (câmara do frigorífico, ainda falso) · Código de barras
+// * Fluxo: Tirar foto (pede à câmara da placa: frigorifico.pedirFoto) · Código de barras
 // * (em breve) · Escrever à mão → caixa _escreverAMao → frigorifico.adicionar.
 // * Folha e não ecrã porque são só 3 escolhas e a pessoa não perde o sítio.
 void mostrarAdicionar(BuildContext context) {
@@ -52,10 +52,14 @@ void mostrarAdicionar(BuildContext context) {
                     icone: Icons.photo_camera_outlined,
                     titulo: 'Tirar foto agora',
                     descricao: 'Atualiza com a câmara do frigorífico',
-                    onTap: () {
+                    onTap: () async {
                       Navigator.pop(folha);
-                      // TODO: chamar a Edge Function analisar-foto (por agora só mostra a mensagem)
-                      mostrarMensagem(context, 'Pedido enviado à câmara');
+                      final erro = await frigorifico.pedirFoto();
+                      if (!context.mounted) return;
+                      mostrarMensagem(
+                        context,
+                        erro ?? 'Pedido enviado à câmara · ~30 s',
+                      );
                     },
                   ),
                   OptionTile(

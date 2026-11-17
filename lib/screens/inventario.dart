@@ -81,9 +81,8 @@ class _InventarioState extends State<Inventario> {
   }
 
   // ? o número que aparece em cada chip
-  int _contarRapido(Rapido r) => _itens
-      .where((i) => i.local == _local && _passaRapido(i, r))
-      .length;
+  int _contarRapido(Rapido r) =>
+      _itens.where((i) => i.local == _local && _passaRapido(i, r)).length;
 
   // ? aplica pesquisa e filtros; recebe os filtros como parâmetro para a
   // ? folha de filtros conseguir contar o "Ver N" antes de os aplicar
@@ -115,8 +114,7 @@ class _InventarioState extends State<Inventario> {
     return lista;
   }
 
-  int _contar(Local local) =>
-      _itens.where((i) => i.local == local).length;
+  int _contar(Local local) => _itens.where((i) => i.local == local).length;
 
   // * ---- ações ----
 
@@ -189,8 +187,8 @@ class _InventarioState extends State<Inventario> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ScreenHeader(
-              // TODO: "visto há 2 min" ainda é texto fixo; deve vir da última leitura (frigorifico.ultimaLeitura), como no Início
-              subtitulo: '$total alimentos · visto há 2 min',
+              subtitulo:
+                  '$total alimentos · visto ${ha(frigorifico.ultimaLeitura)}',
               titulo: 'Inventário',
               acoes: [
                 CircleIconButton(
@@ -295,8 +293,14 @@ class _InventarioState extends State<Inventario> {
                   texto: 'Comprar',
                   tipo: BotaoTipo.tonal,
                   onPressed: () {
-                    frigorifico.adicionarCompra(i.nome, 'Acabou no frigorífico');
-                    mostrarMensagem(context, '${i.nome} ficou na lista de compras');
+                    frigorifico.adicionarCompra(
+                      i.nome,
+                      'Acabou no frigorífico',
+                    );
+                    mostrarMensagem(
+                      context,
+                      '${i.nome} ficou na lista de compras',
+                    );
                   },
                 ),
               ),
@@ -418,7 +422,9 @@ class _InventarioState extends State<Inventario> {
             const SizedBox(width: AppSpacing.small),
             Text(
               'Deitei fora',
-              style: textTheme.labelLarge?.copyWith(color: AppTokens.textDanger),
+              style: textTheme.labelLarge?.copyWith(
+                color: AppTokens.textDanger,
+              ),
             ),
           ],
         ),
@@ -440,13 +446,10 @@ class _InventarioState extends State<Inventario> {
         detalhe: item.certeza < 60
             ? 'A confirmar · ${item.certeza} %'
             : item.aberto
-                ? '${item.quantidadeTexto} · aberto'
-                : item.quantidadeTexto,
+            ? '${item.quantidadeTexto} · aberto'
+            : item.quantidadeTexto,
         estado: estado,
-        chip: TagChip(
-          texto: prazoDe(item.dias),
-          tom: tomDe(estado),
-        ),
+        chip: TagChip(texto: prazoDe(item.dias), tom: tomDe(estado)),
         trailing: const Icon(Icons.chevron_right),
         // ? a câmara não tem a certeza: pergunta primeiro o que é (ecrã 12),
         // ? para o inventário não ficar com nomes errados

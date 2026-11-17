@@ -130,14 +130,20 @@ class BoasVindas extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.mid),
-                  vantagem(Icons.photo_camera_outlined,
-                      'A câmara regista o que entra e sai'),
+                  vantagem(
+                    Icons.photo_camera_outlined,
+                    'A câmara regista o que entra e sai',
+                  ),
                   const SizedBox(height: AppSpacing.midsmall),
-                  vantagem(Icons.notifications_none,
-                      'Avisos antes de os alimentos expirarem'),
+                  vantagem(
+                    Icons.notifications_none,
+                    'Avisos antes de os alimentos expirarem',
+                  ),
                   const SizedBox(height: AppSpacing.midsmall),
-                  vantagem(Icons.restaurant_menu,
-                      'Receitas com o que está a acabar'),
+                  vantagem(
+                    Icons.restaurant_menu,
+                    'Receitas com o que está a acabar',
+                  ),
                 ],
               ),
             ),
@@ -279,13 +285,20 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.wifi, size: 28, color: AppTokens.textBrand),
+                        const Icon(
+                          Icons.wifi,
+                          size: 28,
+                          color: AppTokens.textBrand,
+                        ),
                         const SizedBox(width: AppSpacing.midsmall),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Frigu encontrado', style: textTheme.labelLarge),
+                              Text(
+                                'Frigu encontrado',
+                                style: textTheme.labelLarge,
+                              ),
                               Text(
                                 'FRIGU-3A7C · por Bluetooth',
                                 style: textTheme.bodySmall?.copyWith(
@@ -442,9 +455,18 @@ class EscolherAvisos extends StatelessWidget {
                                   showSelectedIcon: false,
                                   expandedInsets: EdgeInsets.zero,
                                   segments: const [
-                                    ButtonSegment(value: 1, label: Text('1 dia')),
-                                    ButtonSegment(value: 2, label: Text('2 dias')),
-                                    ButtonSegment(value: 3, label: Text('3 dias')),
+                                    ButtonSegment(
+                                      value: 1,
+                                      label: Text('1 dia'),
+                                    ),
+                                    ButtonSegment(
+                                      value: 2,
+                                      label: Text('2 dias'),
+                                    ),
+                                    ButtonSegment(
+                                      value: 3,
+                                      label: Text('3 dias'),
+                                    ),
                                   ],
                                   selected: {dias},
                                   onSelectionChanged: (s) =>
@@ -454,10 +476,10 @@ class EscolherAvisos extends StatelessWidget {
                             ),
                           ),
                           ItemRow(
-                            titulo: 'Resumo diário às 8:00',
+                            titulo: 'Resumo diário às $horaResumo',
                             detalhe: dias == 1
-                                ? 'O que expira amanhã'
-                                : 'O que expira nos próximos $dias dias',
+                                ? 'O que expira amanhã e uma receita'
+                                : 'O que expira nos próximos $dias dias e uma receita',
                             trailing: Switch(
                               value: resumo,
                               onChanged: frigorifico.mudarResumoDiario,
@@ -474,7 +496,7 @@ class EscolherAvisos extends StatelessWidget {
                           ItemRow(
                             titulo: exemplo,
                             detalhe: resumo
-                                ? 'Frigu · 8:00'
+                                ? 'Frigu · $horaResumo'
                                 : 'Frigu · $dias ${dias == 1 ? 'dia' : 'dias'} antes',
                             estado: estado,
                           ),

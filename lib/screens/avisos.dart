@@ -72,18 +72,36 @@ class Avisos extends StatelessWidget {
       // ? apareciam como linhas sem sentido
       if (e.nome == 'Exemplo' || e.data.isBefore(limite)) continue;
       if (e.tipo == TipoEvento.usado) {
-        lista.add(_Registo('${e.nome} aproveitado', 'Usado a tempo · ${_quando(e.data)}',
-            e.data, EstadoValidade.marca, 'Salvo'));
+        lista.add(
+          _Registo(
+            '${e.nome} aproveitado',
+            'Usado a tempo · ${_quando(e.data)}',
+            e.data,
+            EstadoValidade.marca,
+            'Salvo',
+          ),
+        );
       } else {
-        lista.add(_Registo('${e.nome} deitado fora',
-            '${e.motivo ?? 'Deitado fora'} · ${_quando(e.data)}', e.data,
-            EstadoValidade.perigo));
+        lista.add(
+          _Registo(
+            '${e.nome} deitado fora',
+            '${e.motivo ?? 'Deitado fora'} · ${_quando(e.data)}',
+            e.data,
+            EstadoValidade.perigo,
+          ),
+        );
       }
     }
     for (final a in frigorifico.alertas) {
       if (a.data.isBefore(limite)) continue;
-      lista.add(_Registo(a.titulo, '${a.detalhe} · ${_quando(a.data)}', a.data,
-          EstadoValidade.perigo));
+      lista.add(
+        _Registo(
+          a.titulo,
+          '${a.detalhe} · ${_quando(a.data)}',
+          a.data,
+          EstadoValidade.perigo,
+        ),
+      );
     }
     // ? sort com compareTo ao contrário = mais recente primeiro
     lista.sort((a, b) => b.data.compareTo(a.data));
@@ -95,15 +113,21 @@ class Avisos extends StatelessWidget {
     final int antes = item.quantidade;
     final Local localAntes = item.local;
     frigorifico.usar(item);
-    mostrarAnular(context, 'Usaste ${item.nome.toLowerCase()} a tempo',
-        () => frigorifico.repor(item, antes, localAntes));
+    mostrarAnular(
+      context,
+      'Usaste ${item.nome.toLowerCase()} a tempo',
+      () => frigorifico.repor(item, antes, localAntes),
+    );
   }
 
   void _deiteiFora(BuildContext context, Item item) {
     final int antes = item.quantidade;
     frigorifico.deitarFora(item);
-    mostrarAnular(context, '${item.nome} deitado fora',
-        () => frigorifico.repor(item, antes, Local.frigorifico));
+    mostrarAnular(
+      context,
+      '${item.nome} deitado fora',
+      () => frigorifico.repor(item, antes, Local.frigorifico),
+    );
   }
 
   Widget _linhaAlimento(BuildContext context, Item item) {
@@ -202,9 +226,8 @@ class Avisos extends StatelessWidget {
                       titulo: dias == 1
                           ? 'Avisar 1 dia antes'
                           : 'Avisar $dias dias antes',
-                      // TODO: o plano diz notificação diária às 18h com a receita; acertar este texto quando houver notificações
                       detalhe: frigorifico.resumoDiario
-                          ? 'Resumo diário às 8:00'
+                          ? 'Resumo diário às $horaResumo com uma receita'
                           : 'Resumo diário desligado',
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => Navigator.push(
@@ -222,14 +245,14 @@ class Avisos extends StatelessWidget {
                 if (alimentos.isEmpty)
                   Text(
                     'Nada a expirar nos próximos $dias dias.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTokens.textSecondary,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: AppTokens.textSecondary),
                   )
                 else
                   ListCard(
                     children: [
-                      for (final item in alimentos) _linhaAlimento(context, item),
+                      for (final item in alimentos)
+                        _linhaAlimento(context, item),
                     ],
                   ),
                 if (recentes.isNotEmpty) ...[

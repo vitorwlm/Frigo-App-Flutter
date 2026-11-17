@@ -224,9 +224,9 @@ class _LoginState extends State<Login> {
                 onPressed: _aEnviar
                     ? null
                     : () => setState(() {
-                          _registar = !_registar;
-                          _erro = null;
-                        }),
+                        _registar = !_registar;
+                        _erro = null;
+                      }),
               ),
             ],
           ),

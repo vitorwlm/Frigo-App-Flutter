@@ -64,9 +64,22 @@ class Galeria extends StatelessWidget {
               spacing: AppSpacing.small,
               runSpacing: AppSpacing.small,
               children: [
-                AppButton(texto: 'Usei tudo', icone: Icons.check, onPressed: nada),
-                AppButton(texto: 'Usei', tipo: BotaoTipo.tonal, icone: Icons.check, onPressed: nada),
-                AppButton(texto: 'Cancelar', tipo: BotaoTipo.ghost, onPressed: nada),
+                AppButton(
+                  texto: 'Usei tudo',
+                  icone: Icons.check,
+                  onPressed: nada,
+                ),
+                AppButton(
+                  texto: 'Usei',
+                  tipo: BotaoTipo.tonal,
+                  icone: Icons.check,
+                  onPressed: nada,
+                ),
+                AppButton(
+                  texto: 'Cancelar',
+                  tipo: BotaoTipo.ghost,
+                  onPressed: nada,
+                ),
                 AppButton(
                   texto: 'Deitei fora',
                   tipo: BotaoTipo.stroke,
@@ -74,16 +87,39 @@ class Galeria extends StatelessWidget {
                   icone: Icons.delete_outline,
                   onPressed: nada,
                 ),
-                AppButton(texto: 'Já fechei', cor: BotaoCor.neutral, onPressed: nada),
+                AppButton(
+                  texto: 'Já fechei',
+                  cor: BotaoCor.neutral,
+                  onPressed: nada,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.small),
             Row(
               children: [
-                CircleIconButton(icone: Icons.settings_outlined, tooltip: 'superfície', onPressed: nada),
-                CircleIconButton(icone: Icons.add, tooltip: 'contorno', estilo: CirculoEstilo.contorno, onPressed: nada),
-                CircleIconButton(icone: Icons.check, tooltip: 'preenchido', estilo: CirculoEstilo.preenchido, onPressed: nada),
-                CircleIconButton(icone: Icons.more_vert, tooltip: 'transparente', estilo: CirculoEstilo.transparente, onPressed: nada),
+                CircleIconButton(
+                  icone: Icons.settings_outlined,
+                  tooltip: 'superfície',
+                  onPressed: nada,
+                ),
+                CircleIconButton(
+                  icone: Icons.add,
+                  tooltip: 'contorno',
+                  estilo: CirculoEstilo.contorno,
+                  onPressed: nada,
+                ),
+                CircleIconButton(
+                  icone: Icons.check,
+                  tooltip: 'preenchido',
+                  estilo: CirculoEstilo.preenchido,
+                  onPressed: nada,
+                ),
+                CircleIconButton(
+                  icone: Icons.more_vert,
+                  tooltip: 'transparente',
+                  estilo: CirculoEstilo.transparente,
+                  onPressed: nada,
+                ),
               ],
             ),
             espaco,
@@ -96,7 +132,11 @@ class Galeria extends StatelessWidget {
                   detalhe: '2 unidades',
                   estado: EstadoValidade.perigo,
                   chip: const TagChip(texto: 'Hoje', tom: TagTom.perigo),
-                  trailing: AppButton(texto: 'Usei', tipo: BotaoTipo.tonal, onPressed: nada),
+                  trailing: AppButton(
+                    texto: 'Usei',
+                    tipo: BotaoTipo.tonal,
+                    onPressed: nada,
+                  ),
                 ),
                 ItemRow(
                   titulo: 'Ovos',
@@ -130,9 +170,24 @@ class Galeria extends StatelessWidget {
             espaco,
             ListCard(
               children: [
-                OptionTile(icone: Icons.photo_camera_outlined, titulo: 'Tirar foto agora', descricao: 'Atualiza com a câmara do frigorífico', onTap: nada),
-                OptionTile(icone: Icons.edit_outlined, titulo: 'Escrever à mão', descricao: 'Sobras, alimentos sem embalagem', tom: OpcaoTom.neutro, onTap: nada),
-                const ReasonBar(motivo: 'Passou a validade', valor: 3, fracao: 0.6),
+                OptionTile(
+                  icone: Icons.photo_camera_outlined,
+                  titulo: 'Tirar foto agora',
+                  descricao: 'Atualiza com a câmara do frigorífico',
+                  onTap: nada,
+                ),
+                OptionTile(
+                  icone: Icons.edit_outlined,
+                  titulo: 'Escrever à mão',
+                  descricao: 'Sobras, alimentos sem embalagem',
+                  tom: OpcaoTom.neutro,
+                  onTap: nada,
+                ),
+                const ReasonBar(
+                  motivo: 'Passou a validade',
+                  valor: 3,
+                  fracao: 0.6,
+                ),
               ],
             ),
             espaco,

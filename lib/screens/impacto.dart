@@ -30,8 +30,18 @@ class Estimativas {
 }
 
 const List<String> _nomesMeses = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
 ];
 
 // ? Mês / Ano: o mesmo ecrã serve os dois, só muda o filtro dos eventos
@@ -81,11 +91,18 @@ class _ImpactoState extends State<Impacto> {
             s?.copyWith(color: AppTokens.textOnHero);
 
         final agora = DateTime.now();
-        final eventos = frigorifico.eventos.where((e) => _noPeriodo(e)).toList();
-        final anteriores =
-            frigorifico.eventos.where((e) => _noPeriodo(e, recuar: 1)).toList();
-        final usados = eventos.where((e) => e.tipo == TipoEvento.usado).toList();
-        final fora = eventos.where((e) => e.tipo == TipoEvento.deitadoFora).toList();
+        final eventos = frigorifico.eventos
+            .where((e) => _noPeriodo(e))
+            .toList();
+        final anteriores = frigorifico.eventos
+            .where((e) => _noPeriodo(e, recuar: 1))
+            .toList();
+        final usados = eventos
+            .where((e) => e.tipo == TipoEvento.usado)
+            .toList();
+        final fora = eventos
+            .where((e) => e.tipo == TipoEvento.deitadoFora)
+            .toList();
 
         final double? pct = _percentagem(eventos);
         final double? pctAntes = _percentagem(anteriores);
@@ -112,8 +129,8 @@ class _ImpactoState extends State<Impacto> {
         final maisDesperdicado = porNome.entries.isEmpty
             ? null
             : (porNome.entries.toList()
-                  ..sort((a, b) => b.value.compareTo(a.value)))
-                .first;
+                    ..sort((a, b) => b.value.compareTo(a.value)))
+                  .first;
 
         final String nomePeriodo = _periodo == Periodo.mes
             ? _nomesMeses[agora.month - 1]
@@ -137,7 +154,10 @@ class _ImpactoState extends State<Impacto> {
               Row(
                 children: [
                   Expanded(
-                    child: ScreenHeader(subtitulo: nomePeriodo, titulo: 'Impacto'),
+                    child: ScreenHeader(
+                      subtitulo: nomePeriodo,
+                      titulo: 'Impacto',
+                    ),
                   ),
                   SegmentedButton<Periodo>(
                     showSelectedIcon: false,
@@ -146,7 +166,8 @@ class _ImpactoState extends State<Impacto> {
                       ButtonSegment(value: Periodo.ano, label: Text('Ano')),
                     ],
                     selected: {_periodo},
-                    onSelectionChanged: (s) => setState(() => _periodo = s.first),
+                    onSelectionChanged: (s) =>
+                        setState(() => _periodo = s.first),
                   ),
                 ],
               ),
@@ -168,7 +189,10 @@ class _ImpactoState extends State<Impacto> {
                         ),
                         const SizedBox(width: AppSpacing.small),
                         Flexible(
-                          child: Text(comparacao, style: branco(textTheme.labelLarge)),
+                          child: Text(
+                            comparacao,
+                            style: branco(textTheme.labelLarge),
+                          ),
                         ),
                       ],
                     ),
@@ -185,7 +209,9 @@ class _ImpactoState extends State<Impacto> {
                                 height: 8,
                                 decoration: BoxDecoration(
                                   color: AppColors.white,
-                                  borderRadius: BorderRadius.circular(AppRadius.full),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.full,
+                                  ),
                                 ),
                               ),
                             ),
@@ -198,7 +224,9 @@ class _ImpactoState extends State<Impacto> {
                                 height: 8,
                                 decoration: BoxDecoration(
                                   color: AppColors.danger300,
-                                  borderRadius: BorderRadius.circular(AppRadius.full),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.full,
+                                  ),
                                 ),
                               ),
                             ),
@@ -216,7 +244,10 @@ class _ImpactoState extends State<Impacto> {
               const SizedBox(height: AppSpacing.small),
               Row(
                 children: [
-                  _Equivalencia(valor: '${_num(kgSalvos)} kg', legenda: 'de comida salva'),
+                  _Equivalencia(
+                    valor: '${_num(kgSalvos)} kg',
+                    legenda: 'de comida salva',
+                  ),
                   const SizedBox(width: AppSpacing.small),
                   _Equivalencia(
                     valor: '≈ ${(kgSalvos * Estimativas.euroPorKg).round()} €',
@@ -233,7 +264,9 @@ class _ImpactoState extends State<Impacto> {
               Text(
                 'Estimativa: ${Estimativas.euroPorKg.round()} € e '
                 '${_num(Estimativas.co2PorKg)} kg CO₂e por kg de comida.',
-                style: textTheme.labelSmall?.copyWith(color: AppTokens.textSecondary),
+                style: textTheme.labelSmall?.copyWith(
+                  color: AppTokens.textSecondary,
+                ),
               ),
               const SizedBox(height: AppSpacing.mid),
               const SectionTitle(titulo: 'Porque deitas fora'),
@@ -267,7 +300,8 @@ class _ImpactoState extends State<Impacto> {
                   children: [
                     ItemRow(
                       titulo: maisDesperdicado.key,
-                      detalhe: '${maisDesperdicado.value} vezes · compra packs mais pequenos',
+                      detalhe:
+                          '${maisDesperdicado.value} vezes · compra packs mais pequenos',
                       estado: EstadoValidade.perigo,
                       trailing: AppButton(
                         texto: 'Pack de 1',
@@ -313,11 +347,15 @@ class _Equivalencia extends StatelessWidget {
           children: [
             Text(
               valor,
-              style: textTheme.headlineSmall?.copyWith(color: AppTokens.textBrand),
+              style: textTheme.headlineSmall?.copyWith(
+                color: AppTokens.textBrand,
+              ),
             ),
             Text(
               legenda,
-              style: textTheme.bodySmall?.copyWith(color: AppTokens.textSecondary),
+              style: textTheme.bodySmall?.copyWith(
+                color: AppTokens.textSecondary,
+              ),
             ),
           ],
         ),

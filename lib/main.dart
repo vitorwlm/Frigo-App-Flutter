@@ -38,6 +38,8 @@ Future<void> main() async {
   // ? ícones da barra de estado escuros, porque o fundo da app é claro
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
   await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
+  // ? antecedência e resumo diário guardados no telemóvel
+  await frigorifico.carregarDefinicoes();
   runApp(const MyApp());
 }
 
@@ -91,7 +93,7 @@ class _Arranque extends StatefulWidget {
 class _ArranqueState extends State<_Arranque> {
   // ? Future guardado no estado porque, se o criasse dentro do build, o
   // ? FutureBuilder voltava a pedir os dados ao Supabase a cada redesenho
-  //TODO verificar a sintaxe do late final
+  // ? late:o valor só é calculado quando a variável é usada pela primeira vez. final:a variável só recebe valor uma vez e não muda depois.
   late final Future<void> _carregar = frigorifico.carregar();
 
   @override
@@ -161,7 +163,7 @@ class _HomeShellState extends State<HomeShell> {
 
   // ? O botão flutuante muda com o separador: no Início e no Inventário
   // ? adiciona um alimento, nas Compras adiciona à lista; nos outros não há
-  //TODO verificar o porque de Widget?
+  // ? Widget? permite devolver null
   Widget? _botaoAdicionar(BuildContext context) {
     if (_indice == 0 || _indice == 1) {
       return FloatingActionButton.extended(

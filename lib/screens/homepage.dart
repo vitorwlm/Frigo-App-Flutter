@@ -29,15 +29,6 @@ import 'historico_temperatura.dart';
 import 'receita_detalhe.dart';
 import 'ultima_foto.dart';
 
-// ? "há 2 min", "há 3 h": tempo desde a última leitura, para a pessoa saber
-// ? se o que vê é recente
-String _ha(DateTime t) {
-  final int min = DateTime.now().difference(t).inMinutes;
-  if (min < 1) return 'agora';
-  if (min < 60) return 'há $min min';
-  return 'há ${min ~/ 60} h';
-}
-
 // ? StatelessWidget porque não guarda estado: os dados vêm todos do frigorifico
 class Homepage extends StatelessWidget {
   const Homepage({super.key});
@@ -82,40 +73,49 @@ class Homepage extends StatelessWidget {
       builder: (folha) => SafeArea(
         child: SingleChildScrollView(
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.info_outline),
-              title: const Text('Ver detalhes'),
-              // ? fecha a folha primeiro e usa o context do ecrã, não o da folha
-              onTap: () {
-                Navigator.pop(folha);
-                _abrirDetalhe(context, item);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.done_all),
-              title: const Text('Usei tudo'),
-              onTap: () {
-                Navigator.pop(folha);
-                final int antes = item.quantidade;
-                frigorifico.usarTudo(item);
-                mostrarAnular(context, 'Usaste ${item.nome.toLowerCase()} a tempo',
-                    () => frigorifico.repor(item, antes, Local.frigorifico));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppTokens.textDanger),
-              title: const Text('Deitei fora'),
-              onTap: () {
-                Navigator.pop(folha);
-                final int antes = item.quantidade;
-                frigorifico.deitarFora(item);
-                mostrarAnular(context, '${item.nome} deitado fora',
-                    () => frigorifico.repor(item, antes, Local.frigorifico));
-              },
-            ),
-          ],
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: const Text('Ver detalhes'),
+                // ? fecha a folha primeiro e usa o context do ecrã, não o da folha
+                onTap: () {
+                  Navigator.pop(folha);
+                  _abrirDetalhe(context, item);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.done_all),
+                title: const Text('Usei tudo'),
+                onTap: () {
+                  Navigator.pop(folha);
+                  final int antes = item.quantidade;
+                  frigorifico.usarTudo(item);
+                  mostrarAnular(
+                    context,
+                    'Usaste ${item.nome.toLowerCase()} a tempo',
+                    () => frigorifico.repor(item, antes, Local.frigorifico),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppTokens.textDanger,
+                ),
+                title: const Text('Deitei fora'),
+                onTap: () {
+                  Navigator.pop(folha);
+                  final int antes = item.quantidade;
+                  frigorifico.deitarFora(item);
+                  mostrarAnular(
+                    context,
+                    '${item.nome} deitado fora',
+                    () => frigorifico.repor(item, antes, Local.frigorifico),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -178,7 +178,9 @@ class Homepage extends StatelessWidget {
                     tooltip: 'Definições',
                     onPressed: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const Definicoes()),
+                      MaterialPageRoute(
+                        builder: (context) => const Definicoes(),
+                      ),
                     ),
                   ),
                 ],
@@ -330,11 +332,10 @@ class _HeroInicio extends StatelessWidget {
     String numero = '$total';
     String unidade = 'alimentos';
     final f = frigorifico;
-    final String alvo =
-        '${numeroPt(f.alvoMin)}–${numeroPt(f.alvoMax)} °C';
+    final String alvo = '${numeroPt(f.alvoMin)}–${numeroPt(f.alvoMax)} °C';
     String direita1 = graus(f.temperatura);
     String direita2 = '${f.humidade} % humidade';
-    String mensagem = 'Visto ${_ha(f.ultimaLeitura)} · porta fechada';
+    String mensagem = 'Visto ${ha(f.ultimaLeitura)} · porta fechada';
     String? botao;
     VoidCallback? acao;
 
@@ -350,12 +351,14 @@ class _HeroInicio extends StatelessWidget {
         unidade = 'alvo $alvo';
         direita1 = '';
         direita2 = '';
-        mensagem =
-            'Acima do alvo. Vê se a porta ficou mal fechada ou se há algo quente lá dentro.';
+        mensagem = 'Acima do alvo. Vê se a porta ficou mal fechada ou se há algo quente lá dentro.';
         botao = 'Já fechei a porta';
         acao = () {
           f.fecharPorta();
-          mostrarMensagem(context, 'Avisamos se a temperatura não voltar ao alvo');
+          mostrarMensagem(
+            context,
+            'Avisamos se a temperatura não voltar ao alvo',
+          );
         };
       case EstadoFrigu.semLigacao:
         cor = AppTokens.heroOffline;
@@ -363,7 +366,7 @@ class _HeroInicio extends StatelessWidget {
         icone = Icons.wifi_off;
         link = 'Ver inventário';
         mensagem =
-            'Última leitura ${_ha(f.ultimaLeitura)} · a lista pode estar desatualizada';
+            'Última leitura ${ha(f.ultimaLeitura)} · a lista pode estar desatualizada';
         botao = 'Tentar ligar de novo';
         // ? async porque espera pela placa antes de dizer "Ligado de novo"
         acao = () async {
@@ -377,8 +380,9 @@ class _HeroInicio extends StatelessWidget {
         icone = Icons.door_front_door_outlined;
         link = '';
         // ! porque neste estado portaAbertaDesde nunca é null
-        final int aberta =
-            DateTime.now().difference(f.portaAbertaDesde!).inMinutes;
+        final int aberta = DateTime.now()
+            .difference(f.portaAbertaDesde!)
+            .inMinutes;
         numero = '$aberta min';
         unidade = 'aberta';
         direita2 = 'a subir';

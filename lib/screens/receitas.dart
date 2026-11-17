@@ -116,10 +116,12 @@ class _ReceitasState extends State<Receitas> {
     final candidatas = receitas.where((r) => r.tensTudo(r.pessoasBase)).toList()
       ..sort((a, b) => b.salva.compareTo(a.salva));
     // ? ↑ .. = faz o sort e devolve a própria lista
-    final Receita destaque =
-        candidatas.isNotEmpty ? candidatas.first : receitas.first;
-    final outras =
-        receitas.where((r) => r.id != destaque.id && _passa(r)).toList();
+    final Receita destaque = candidatas.isNotEmpty
+        ? candidatas.first
+        : receitas.first;
+    final outras = receitas
+        .where((r) => r.id != destaque.id && _passa(r))
+        .toList();
 
     return SafeArea(
       child: ListView(
@@ -161,8 +163,10 @@ class _ReceitasState extends State<Receitas> {
           ],
           // ? com texto escrito, mostra só os resultados (sem destaque nem
           // ? filtros, que confundiam)
-          if (_procura.trim().isNotEmpty) ..._resultados(context, receitas)
-          else ..._normal(context, destaque, outras),
+          if (_procura.trim().isNotEmpty)
+            ..._resultados(context, receitas)
+          else
+            ..._normal(context, destaque, outras),
         ],
       ),
     );
@@ -183,9 +187,8 @@ class _ReceitasState extends State<Receitas> {
           Text(
             'Ainda não há receitas. O administrador pode criá-las em '
             'Definições → Administração.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppTokens.textSecondary,
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: AppTokens.textSecondary),
           ),
         ],
       ),
@@ -201,9 +204,8 @@ class _ReceitasState extends State<Receitas> {
       if (encontradas.isEmpty)
         Text(
           'Nenhuma receita com "${_procura.trim()}"',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTokens.textSecondary,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: AppTokens.textSecondary),
         ),
       for (final r in encontradas) ..._cartao(context, r),
     ];
@@ -232,9 +234,8 @@ class _ReceitasState extends State<Receitas> {
       if (outras.isEmpty)
         Text(
           'Nenhuma receita com este filtro',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTokens.textSecondary,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: AppTokens.textSecondary),
         ),
       for (final r in outras) ..._cartao(context, r),
     ];
@@ -344,7 +345,8 @@ class _Destaque extends StatelessWidget {
                     children: [
                       for (final i in aExpirar)
                         TagChip(
-                          texto: '${i.plural} · ${prazoDe(i.dias!).toLowerCase()}',
+                          texto:
+                              '${i.plural} · ${prazoDe(i.dias!).toLowerCase()}',
                           tom: tomDe(estadoDe(i.dias!)),
                         ),
                       TagChip(

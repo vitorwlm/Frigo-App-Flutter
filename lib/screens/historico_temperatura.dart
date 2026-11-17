@@ -21,7 +21,15 @@ import '../widgets/tag_chip.dart';
 // ! nome diferente do Periodo do Impacto para não chocarem nos imports
 enum Periodo24 { dia, semana }
 
-const List<String> _diasSemana = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+const List<String> _diasSemana = [
+  'seg',
+  'ter',
+  'qua',
+  'qui',
+  'sex',
+  'sáb',
+  'dom',
+];
 
 // ? "09:05": padLeft põe o 0 à esquerda
 String _hora(DateTime t) =>
@@ -59,10 +67,12 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
 
     final DateTime desde = leituras.first.$1;
     // ? só as aberturas dentro do período do gráfico, mais recentes primeiro
-    final aberturas = f.aberturas.where((a) => !a.inicio.isBefore(desde)).toList()
-      ..sort((a, b) => b.inicio.compareTo(a.inicio));
+    final aberturas =
+        f.aberturas.where((a) => !a.inicio.isBefore(desde)).toList()
+          ..sort((a, b) => b.inicio.compareTo(a.inicio));
 
-    final bool noAlvo = f.temperatura >= f.alvoMin && f.temperatura <= f.alvoMax;
+    final bool noAlvo =
+        f.temperatura >= f.alvoMin && f.temperatura <= f.alvoMax;
 
     return Scaffold(
       body: SafeArea(
@@ -99,7 +109,10 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text(graus(f.temperatura), style: textTheme.headlineMedium),
+                      Text(
+                        graus(f.temperatura),
+                        style: textTheme.headlineMedium,
+                      ),
                       const SizedBox(width: AppSpacing.small),
                       Text(
                         'agora',
@@ -143,13 +156,17 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
                     children: [
                       _Legenda(
                         cor: AppTokens.bgTonalSoft,
-                        texto: 'Alvo ${numeroPt(f.alvoMin)}–${numeroPt(f.alvoMax)} °C',
+                        texto:
+                            'Alvo ${numeroPt(f.alvoMin)}–${numeroPt(f.alvoMax)} °C',
                       ),
                       const _Legenda(
                         cor: AppTokens.statusWarning,
                         texto: 'Porta aberta',
                       ),
-                      const _Legenda(cor: AppTokens.statusDanger, texto: 'Máximo'),
+                      const _Legenda(
+                        cor: AppTokens.statusDanger,
+                        texto: 'Máximo',
+                      ),
                     ],
                   ),
                 ],
@@ -158,9 +175,13 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
             const SizedBox(height: AppSpacing.midsmall),
             Row(
               children: [
-                Expanded(child: _Resumo(titulo: 'Mínima', valor: graus(minimo))),
+                Expanded(
+                  child: _Resumo(titulo: 'Mínima', valor: graus(minimo)),
+                ),
                 const SizedBox(width: AppSpacing.small),
-                Expanded(child: _Resumo(titulo: 'Média', valor: graus(media))),
+                Expanded(
+                  child: _Resumo(titulo: 'Média', valor: graus(media)),
+                ),
                 const SizedBox(width: AppSpacing.small),
                 Expanded(
                   child: _Resumo(
@@ -172,7 +193,10 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
               ],
             ),
             const SizedBox(height: AppSpacing.midsmall),
-            SectionTitle(titulo: 'Aberturas da porta', contador: aberturas.length),
+            SectionTitle(
+              titulo: 'Aberturas da porta',
+              contador: aberturas.length,
+            ),
             const SizedBox(height: AppSpacing.midsmall),
             if (aberturas.isEmpty)
               Text(
@@ -183,9 +207,7 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
               )
             else
               ListCard(
-                children: [
-                  for (final a in aberturas) _linhaAbertura(a, dia),
-                ],
+                children: [for (final a in aberturas) _linhaAbertura(a, dia)],
               ),
           ],
         ),
@@ -242,9 +264,8 @@ class _Legenda extends StatelessWidget {
         const SizedBox(width: AppSpacing.small),
         Text(
           texto,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: AppTokens.textSecondary,
-          ),
+          style: Theme.of(context).textTheme.labelSmall
+              ?.copyWith(color: AppTokens.textSecondary),
         ),
       ],
     );
@@ -253,7 +274,11 @@ class _Legenda extends StatelessWidget {
 
 // ? Mínima / Média / Máxima; a máxima fica vermelha se passou o alvo
 class _Resumo extends StatelessWidget {
-  const _Resumo({required this.titulo, required this.valor, this.alerta = false});
+  const _Resumo({
+    required this.titulo,
+    required this.valor,
+    this.alerta = false,
+  });
 
   final String titulo;
   final String valor;
@@ -273,7 +298,9 @@ class _Resumo extends StatelessWidget {
         children: [
           Text(
             titulo,
-            style: textTheme.bodySmall?.copyWith(color: AppTokens.textSecondary),
+            style: textTheme.bodySmall?.copyWith(
+              color: AppTokens.textSecondary,
+            ),
           ),
           Text(
             valor,

@@ -24,8 +24,14 @@ import 'confirmar_sheet.dart';
 
 // ? Uma caixa à volta de um alimento na foto, em frações (0–1) da foto
 class _Caixa {
-  _Caixa(this.nome, this.topo, this.esquerda, this.fundo, this.direita,
-      this.certo);
+  _Caixa(
+    this.nome,
+    this.topo,
+    this.esquerda,
+    this.fundo,
+    this.direita,
+    this.certo,
+  );
 
   final String nome;
   final double topo, esquerda, fundo, direita;
@@ -63,12 +69,17 @@ Future<_Foto?> _ultimaFoto() async {
     final b = (d['box_2d'] as List).map((v) => (v as num) / 1000).toList();
     if (b.length != 4) continue;
     final certeza = (d['confianca'] ?? d['certeza'] ?? 100) as num;
-    caixas.add(_Caixa(
-      '${d['nome'] ?? '?'}',
-      b[0], b[1], b[2], b[3],
-      // ? 0–1 ou 0–100, conforme o que o Gemini mandar
-      (certeza <= 1 ? certeza * 100 : certeza) >= 60,
-    ));
+    caixas.add(
+      _Caixa(
+        '${d['nome'] ?? '?'}',
+        b[0],
+        b[1],
+        b[2],
+        b[3],
+        // ? 0–1 ou 0–100, conforme o que o Gemini mandar
+        (certeza <= 1 ? certeza * 100 : certeza) >= 60,
+      ),
+    );
   }
   return _Foto(
     url,
@@ -107,6 +118,20 @@ class _UltimaFotoState extends State<UltimaFoto> {
     }
   }
 
+  // ? Pede a foto à placa (frigorifico.pedirFoto) e volta a ler a última
+  // ? foto quando já deve estar analisada: a placa vê o pedido em até 10 s
+  // ? e o Gemini demora 10–30 s
+  Future<void> _tirarFoto() async {
+    final erro = await frigorifico.pedirFoto();
+    if (!mounted) return;
+    mostrarMensagem(context, erro ?? 'Pedido enviado à câmara · ~30 s');
+    if (erro != null) return;
+    await Future.delayed(const Duration(seconds: 45));
+    // ! mounted: a pessoa pode ter saído do ecrã durante a espera
+    if (!mounted) return;
+    setState(() => _foto = _carregar());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,11 +162,7 @@ class _UltimaFotoState extends State<UltimaFoto> {
                       CircleIconButton(
                         icone: Icons.photo_camera_outlined,
                         tooltip: 'Tirar foto agora',
-                        onPressed: () {
-                          // TODO: chamar a Edge Function analisar-foto (como no Adicionar)
-                          mostrarMensagem(context, 'Pedido enviado à câmara');
-                          setState(() => _foto = _carregar());
-                        },
+                        onPressed: _tirarFoto,
                       ),
                     ],
                   ),
@@ -161,17 +182,17 @@ class _UltimaFotoState extends State<UltimaFoto> {
   // ? Lista do que está no frigorífico: primeiro o que a câmara tem a
   // ? certeza, no fim o que falta confirmar (toca para confirmar)
   List<Widget> _reconhecidos(BuildContext context) {
-    final itens = frigorifico.noFrigorifico.where((i) => i.quantidade > 0).toList()
-      ..sort((a, b) => b.certeza.compareTo(a.certeza));
+    final itens =
+        frigorifico.noFrigorifico.where((i) => i.quantidade > 0).toList()
+          ..sort((a, b) => b.certeza.compareTo(a.certeza));
     return [
       SectionTitle(titulo: 'Reconhecidos', contador: itens.length),
       const SizedBox(height: AppSpacing.midsmall),
       if (itens.isEmpty)
         Text(
           'A câmara ainda não reconheceu nada.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppTokens.textSecondary,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: AppTokens.textSecondary),
         )
       else
         ListCard(children: [for (final i in itens) _linha(context, i)]),
@@ -224,37 +245,42 @@ class _QuadroFoto extends StatelessWidget {
           child: aCarregar
               ? const Center(child: CircularProgressIndicator())
               : foto == null
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.photo_camera_outlined,
-                              size: 32, color: AppColors.gray400),
-                          const SizedBox(height: AppSpacing.small),
-                          Text('Ainda não há fotos da câmara', style: cinza),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.photo_camera_outlined,
+                        size: 32,
+                        color: AppColors.gray400,
                       ),
-                    )
-                  // ? LayoutBuilder dá o tamanho real do quadro para pôr
-                  // ? as caixas no sítio certo
-                  : LayoutBuilder(
-                      builder: (context, c) => Stack(
-                        children: [
-                          Positioned.fill(
-                            child: Image.network(
-                              foto!.url,
-                              fit: BoxFit.fill,
-                              errorBuilder: (_, _, _) => Center(
-                                child: Text('Não deu para abrir a foto',
-                                    style: cinza),
-                              ),
+                      const SizedBox(height: AppSpacing.small),
+                      Text('Ainda não há fotos da câmara', style: cinza),
+                    ],
+                  ),
+                )
+              // ? LayoutBuilder dá o tamanho real do quadro para pôr
+              // ? as caixas no sítio certo
+              : LayoutBuilder(
+                  builder: (context, c) => Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.network(
+                          foto!.url,
+                          fit: BoxFit.fill,
+                          errorBuilder: (_, _, _) => Center(
+                            child: Text(
+                              'Não deu para abrir a foto',
+                              style: cinza,
                             ),
                           ),
-                          for (final cx in foto!.caixas)
-                            ..._caixa(cx, c.maxWidth, c.maxHeight),
-                        ],
+                        ),
                       ),
-                    ),
+                      for (final cx in foto!.caixas)
+                        ..._caixa(cx, c.maxWidth, c.maxHeight),
+                    ],
+                  ),
+                ),
         ),
       ),
     );

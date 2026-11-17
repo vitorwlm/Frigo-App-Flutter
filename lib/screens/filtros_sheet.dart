@@ -94,12 +94,19 @@ Future<Filtros?> mostrarFiltros(
                   SegmentedButton<Ordem>(
                     showSelectedIcon: false,
                     segments: const [
-                      ButtonSegment(value: Ordem.validade, label: Text('Validade')),
+                      ButtonSegment(
+                        value: Ordem.validade,
+                        label: Text('Validade'),
+                      ),
                       ButtonSegment(value: Ordem.nome, label: Text('Nome')),
-                      ButtonSegment(value: Ordem.recentes, label: Text('Recentes')),
+                      ButtonSegment(
+                        value: Ordem.recentes,
+                        label: Text('Recentes'),
+                      ),
                     ],
                     selected: {f.ordem},
-                    onSelectionChanged: (s) => setFolha(() => f.ordem = s.first),
+                    onSelectionChanged: (s) =>
+                        setFolha(() => f.ordem = s.first),
                   ),
                   const SizedBox(height: AppSpacing.midsmall),
                   Text('Mostrar só', style: textTheme.labelLarge),

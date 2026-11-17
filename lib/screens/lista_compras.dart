@@ -111,8 +111,12 @@ class ListaCompras extends StatelessWidget {
       listenable: frigorifico,
       builder: (context, _) {
         final textTheme = Theme.of(context).textTheme;
-        final porComprar = frigorifico.compras.where((c) => !c.noCarrinho).toList();
-        final noCarrinho = frigorifico.compras.where((c) => c.noCarrinho).toList();
+        final porComprar = frigorifico.compras
+            .where((c) => !c.noCarrinho)
+            .toList();
+        final noCarrinho = frigorifico.compras
+            .where((c) => c.noCarrinho)
+            .toList();
 
         // ? o que ainda está bom em casa (5 dias ou mais): mostrado no topo
         // ? para lembrar de não o comprar outra vez (ODS 12.3); só 2 para o
@@ -154,7 +158,10 @@ class ListaCompras extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const HeroPill(texto: 'Já tens em casa', icone: Icons.check_circle),
+                      const HeroPill(
+                        texto: 'Já tens em casa',
+                        icone: Icons.check_circle,
+                      ),
                       const SizedBox(height: AppSpacing.small),
                       Text(
                         '${_capitalizar(emCasa.join(' e '))} ainda estão bons. '

@@ -22,8 +22,18 @@ import 'filtros_sheet.dart';
 import 'receita_detalhe.dart';
 
 const List<String> _meses = [
-  'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
-  'jul', 'ago', 'set', 'out', 'nov', 'dez',
+  'jan',
+  'fev',
+  'mar',
+  'abr',
+  'mai',
+  'jun',
+  'jul',
+  'ago',
+  'set',
+  'out',
+  'nov',
+  'dez',
 ];
 
 // ? "6 nov": formato curto à mão, para não precisar do pacote intl só para isto
@@ -52,10 +62,13 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
     // ? ("Iogurte natural" → "iogurte"), para sugerir onde o gastar
     final String chave = item.nome.split(' ').first.toLowerCase();
     return frigorifico.receitas
-        .where((r) => r.ingredientes.any(
-              (i) => i.plural.toLowerCase().contains(chave) ||
-                  i.nome.toLowerCase().contains(chave),
-            ))
+        .where(
+          (r) => r.ingredientes.any(
+            (i) =>
+                i.plural.toLowerCase().contains(chave) ||
+                i.nome.toLowerCase().contains(chave),
+          ),
+        )
         .toList();
   }
 
@@ -217,7 +230,9 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        dias <= 0 ? 'Hoje' : (dias == 1 ? '1 dia' : '$dias dias'),
+                        dias <= 0
+                            ? 'Hoje'
+                            : (dias == 1 ? '1 dia' : '$dias dias'),
                         style: branco(textTheme.displayLarge),
                       ),
                       const SizedBox(width: AppSpacing.small),
@@ -280,7 +295,10 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                                   color: AppTokens.textSecondary,
                                 ),
                               ),
-                              Text(item.quantidadeTexto, style: textTheme.labelLarge),
+                              Text(
+                                item.quantidadeTexto,
+                                style: textTheme.labelLarge,
+                              ),
                             ],
                           ),
                         ),
@@ -328,7 +346,8 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReceitaDetalhe(receita: receitas.first),
+                    builder: (context) =>
+                        ReceitaDetalhe(receita: receitas.first),
                   ),
                 ),
                 child: Row(

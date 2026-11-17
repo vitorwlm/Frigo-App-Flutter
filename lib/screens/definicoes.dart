@@ -4,7 +4,6 @@
 // * (temperatura-alvo, Câmara → Ligar ao frigorífico) → Demonstração (simular
 // * estados, alimentos de exemplo) → Conta (Administração só para o admin,
 // * Terminar sessão → volta ao Login).
-//TODO rever a partir daqui
 import 'package:flutter/material.dart';
 
 import '../data/frigorifico.dart';
@@ -85,7 +84,6 @@ class Definicoes extends StatelessWidget {
                           const SizedBox(height: AppSpacing.small),
                           // ? SegmentedButton porque são só 3 opções e vê-se
                           // ? logo qual está escolhida.
-                          // TODO: diasAviso e resumoDiario ainda só ficam na memória (voltam ao padrão ao reabrir a app)
                           SegmentedButton<int>(
                             showSelectedIcon: false,
                             // ? ocupa a largura toda
@@ -103,10 +101,10 @@ class Definicoes extends StatelessWidget {
                       ),
                     ),
                     ItemRow(
-                      titulo: 'Resumo diário às 8:00',
+                      titulo: 'Resumo diário às $horaResumo',
                       detalhe: dias == 1
-                          ? 'O que expira amanhã'
-                          : 'O que expira nos próximos $dias dias',
+                          ? 'O que expira amanhã e uma receita'
+                          : 'O que expira nos próximos $dias dias e uma receita',
                       trailing: Switch(
                         value: frigorifico.resumoDiario,
                         onChanged: frigorifico.mudarResumoDiario,

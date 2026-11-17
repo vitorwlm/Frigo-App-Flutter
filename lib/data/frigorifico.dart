@@ -8,6 +8,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/compra.dart';
@@ -28,6 +29,18 @@ String numeroPt(double v) => v == v.roundToDouble()
 
 // ? 4.2 -> "4,2 °C"
 String graus(double v) => '${v.toStringAsFixed(1).replaceAll('.', ',')} °C';
+
+// ? "há 2 min", "há 3 h": tempo desde a última leitura, para a pessoa saber
+// ? se o que vê é recente (usado no Início e no Inventário)
+String ha(DateTime t) {
+  final int min = DateTime.now().difference(t).inMinutes;
+  if (min < 1) return 'agora';
+  if (min < 60) return 'há $min min';
+  return 'há ${min ~/ 60} h';
+}
+
+// ? hora do resumo diário (notificação com o que expira e uma receita)
+const String horaResumo = '18:00';
 
 // ? Usei ChangeNotifier (e não setState em cada ecrã) porque vários ecrãs
 // ? mostram os mesmos dados: quando algo muda, notifyListeners() avisa todos
@@ -117,7 +130,6 @@ class Frigorifico extends ChangeNotifier {
 
   // ? o que expira em 4 dias ou menos, do mais urgente para o menos
   // ? (cartão "A expirar" do Início)
-  //TODO por o .. sort
   List<Item> get aExpirar =>
       noFrigorifico.where((i) => i.dias <= 4).toList()
         ..sort((a, b) => a.dias.compareTo(b.dias));
@@ -126,7 +138,7 @@ class Frigorifico extends ChangeNotifier {
 
   // ? A melhor receita para hoje (ODS 12.3): tens tudo e aproveita mais
   // ? alimentos a expirar. null quando ainda não há receitas na base de dados
-  //TODO porque Receita?
+  // ? Permite devolver null ?
   Receita? get receitaDoDia {
     if (receitas.isEmpty) return null;
     final candidatas = receitas.where((r) => r.tensTudo(r.pessoasBase)).toList()
@@ -756,14 +768,29 @@ class Frigorifico extends ChangeNotifier {
 
   // * ---- definições ----
 
+  // ? Estas 2 definições são do telemóvel (não da conta), por isso ficam no
+  // ? SharedPreferences e não no Supabase. O main.dart chama isto antes do
+  // ? 1.º ecrã para não se ver o valor padrão a piscar.
+  Future<void> carregarDefinicoes() async {
+    final prefs = await SharedPreferences.getInstance();
+    diasAviso = prefs.getInt('diasAviso') ?? diasAviso;
+    resumoDiario = prefs.getBool('resumoDiario') ?? resumoDiario;
+    notifyListeners();
+  }
+
+  // ? muda já na memória (ecrã responde logo) e grava em segundo plano
   void mudarDiasAviso(int dias) {
     diasAviso = dias;
     notifyListeners();
+    SharedPreferences.getInstance().then((p) => p.setInt('diasAviso', dias));
   }
 
   void mudarResumoDiario(bool ligado) {
     resumoDiario = ligado;
     notifyListeners();
+    SharedPreferences.getInstance().then(
+      (p) => p.setBool('resumoDiario', ligado),
+    );
   }
 
   // ? Devolve uma mensagem de erro, ou null se correu bem (o ecrã das
@@ -790,6 +817,29 @@ class Frigorifico extends ChangeNotifier {
     } catch (e) {
       _erro(e);
       return 'Não foi possível guardar no Supabase.';
+    }
+  }
+
+  // ? Botão "Tirar foto agora" (Adicionar e Última foto). A app não chama a
+  // ? Edge Function analisar-foto diretamente porque ela precisa da foto, e
+  // ? quem a tira é a câmara da placa. Por isso grava a hora do pedido em
+  // ? configuracao.pedir_foto; a ESP32 vê que mudou (de 10 em 10 s), tira a
+  // ? foto e manda-a à analisar-foto (pedido_foto.sql e rede.cpp).
+  // ? Devolve null se o pedido foi gravado, ou a mensagem de erro.
+  Future<String?> pedirFoto() async {
+    if (!naNuvem) return 'Só funciona com o frigorífico ligado à conta.';
+    try {
+      final mudadas = await supabase
+          .from('configuracao')
+          .update({'valor': DateTime.now().toUtc().toIso8601String()})
+          .eq('chave', 'pedir_foto')
+          .select();
+      // ! lista vazia = a linha não existe ou falta a política "app pede foto"
+      if (mudadas.isEmpty) return 'A câmara ainda não aceita pedidos da app.';
+      return null;
+    } catch (e) {
+      _erro(e);
+      return 'Não foi possível falar com o frigorífico.';
     }
   }
 
