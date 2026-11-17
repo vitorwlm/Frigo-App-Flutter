@@ -4,6 +4,8 @@
 // * enum porque só há dois tipos possíveis e o compilador avisa se faltar um
 enum TipoEvento { usado, deitadoFora }
 
+// ? Gravado na tabela historico (esquema_historico.sql), para o Impacto
+// ? continuar a ter os números depois de fechar a app.
 class Evento {
   const Evento({
     required this.itemId,
@@ -38,6 +40,16 @@ class AlertaSensor {
   final String titulo;
   final String detalhe;
   final DateTime data;
+}
+
+// ? Um ponto do gráfico do Histórico da temperatura: a hora e os °C.
+// ? Classe pequena (em vez de guardar 2 listas) para a hora e a temperatura
+// ? andarem sempre juntas
+class Leitura {
+  const Leitura(this.hora, this.temperatura);
+
+  final DateTime hora;
+  final double temperatura;
 }
 
 // ? Uma vez que a porta esteve aberta (ecrã 20): o gráfico do Histórico da

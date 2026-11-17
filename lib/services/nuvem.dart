@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/compra.dart';
+import '../models/evento.dart';
 import '../models/item.dart';
 import '../models/receita.dart';
 import '../widgets/tag_chip.dart';
@@ -158,6 +159,30 @@ Map<String, dynamic> linhaDaReceita(Receita r) => {
       },
   ],
   'passos': r.passos,
+};
+
+// ---------------------------------------------------------------------------
+// Histórico do Impacto (tabela historico, esquema_historico.sql).
+// Na base de dados o tipo é texto ('usado' / 'deitado_fora') e não o índice
+// do enum, para não trocar se a ordem do TipoEvento mudar.
+// ---------------------------------------------------------------------------
+Evento eventoDaLinha(Map<String, dynamic> l) => Evento(
+  itemId: '${l['item_id'] ?? ''}',
+  nome: l['nome'] as String,
+  tipo: l['tipo'] == 'deitado_fora' ? TipoEvento.deitadoFora : TipoEvento.usado,
+  data: DateTime.parse(l['criado_em'] as String).toLocal(),
+  pesoKg: (l['peso_kg'] as num).toDouble(),
+  motivo: l['motivo'] as String?,
+);
+
+Map<String, dynamic> linhaDoEvento(Evento e) => {
+  // ? int.tryParse: os itens de exemplo têm ids que não são números
+  'item_id': int.tryParse(e.itemId),
+  'nome': e.nome,
+  'tipo': e.tipo == TipoEvento.deitadoFora ? 'deitado_fora' : 'usado',
+  'peso_kg': e.pesoKg,
+  'motivo': e.motivo,
+  'criado_em': e.data.toUtc().toIso8601String(),
 };
 
 // ---------------------------------------------------------------------------

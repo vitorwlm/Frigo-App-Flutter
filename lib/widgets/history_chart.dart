@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../models/evento.dart';
 import '../theme/app_tokens.dart';
 
 // * Gráfico do ecrã 20 (Histórico da temperatura): linha da temperatura,
@@ -18,7 +19,7 @@ class HistoryChart extends StatelessWidget {
   });
 
   // ? (momento, °C), do mais antigo para agora
-  final List<(DateTime, double)> leituras;
+  final List<Leitura> leituras;
   // ? momentos em que a porta abriu
   final List<DateTime> portas;
   final double alvoMin;
@@ -34,12 +35,12 @@ class HistoryChart extends StatelessWidget {
       color: AppTokens.textSecondary,
     );
 
-    final DateTime inicio = leituras.first.$1;
+    final DateTime inicio = leituras.first.hora;
     // ? x = minutos desde a primeira leitura (o fl_chart só aceita números,
     // ? não datas)
     double x(DateTime t) => t.difference(inicio).inMinutes.toDouble();
 
-    final pontos = [for (final l in leituras) FlSpot(x(l.$1), l.$2)];
+    final pontos = [for (final l in leituras) FlSpot(x(l.hora), l.temperatura)];
     final double maxX = pontos.last.x;
     // ? reduce = compara todos e fica com o maior
     final FlSpot maximo = pontos.reduce((a, b) => b.y > a.y ? b : a);

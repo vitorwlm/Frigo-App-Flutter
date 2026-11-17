@@ -21,7 +21,8 @@ EstadoValidade estadoDe(int dias) {
 
 // ? texto do chip do prazo
 String prazoDe(int dias) {
-  if (dias <= 0) return 'Hoje';
+  if (dias < 0) return 'Expirou';
+  if (dias == 0) return 'Hoje';
   if (dias == 1) return 'Amanhã';
   return '$dias dias';
 }

@@ -5,9 +5,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app/data/frigorifico.dart';
+import 'package:app/models/evento.dart';
 import 'package:app/models/item.dart';
 import 'package:app/models/receita.dart';
 import 'package:app/services/nuvem.dart';
+import 'package:app/widgets/item_row.dart';
 import 'package:app/widgets/tag_chip.dart';
 
 // ? Ajudantes para não repetir os mesmos dados em cada teste
@@ -176,6 +178,63 @@ void main() {
     test('palavra curta compara com o início do nome', () {
       expect(ingredienteCorresponde(ing('ovo'), _item('Ovos')), isTrue);
       expect(ingredienteCorresponde(ing('ovo'), _item('Iogurte')), isFalse);
+    });
+  });
+
+  group('Cozinhar e prazos', () {
+    test('cozinhar gasta de vários itens até ter o que a receita pede', () {
+      // ? sem Supabase (naNuvem = false): só mexe na memória
+      final f = Frigorifico();
+      final a = _item('Iogurte natural');
+      final b = Item(
+        id: '2',
+        nome: 'Iogurte natural',
+        quantidade: 1,
+        unidade: 'unidades',
+        validade: DateTime.now().add(const Duration(days: 5)),
+        entrada: DateTime.now(),
+      );
+      f.itens.addAll([a, b]);
+      final r = Receita(
+        id: '1',
+        titulo: 'Taça de iogurte',
+        descricao: '',
+        minutos: 5,
+        pessoasBase: 1,
+        ingredientes: [
+          Ingrediente(
+            nome: 'iogurte',
+            plural: 'iogurtes',
+            porPessoa: 2,
+            unidade: 'unidades',
+          ),
+        ],
+        passos: const [],
+      );
+      f.cozinhar(r, 1);
+      expect(a.quantidade, 0);
+      expect(b.quantidade, 0);
+    });
+
+    test('evento ↔ linha do historico', () {
+      final e = eventoDaLinha({
+        'id': 9,
+        'item_id': 4,
+        'nome': 'Ovos',
+        'tipo': 'deitado_fora',
+        'peso_kg': 0.2,
+        'motivo': 'Passou a validade',
+        'criado_em': '2026-11-10T10:00:00Z',
+      });
+      expect(e.tipo, TipoEvento.deitadoFora);
+      expect(e.itemId, '4');
+      expect(linhaDoEvento(e)['tipo'], 'deitado_fora');
+      expect(linhaDoEvento(e)['item_id'], 4);
+    });
+
+    test('alimento já expirado não diz "Hoje"', () {
+      expect(prazoDe(-2), 'Expirou');
+      expect(prazoDe(0), 'Hoje');
     });
   });
 }

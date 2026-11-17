@@ -186,7 +186,11 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
 
     final int dias = item.dias;
     String prazo;
-    if (dias <= 0) {
+    // ! dias < 0 primeiro: antes um alimento já fora da validade dizia
+    // ! "Expira hoje"
+    if (dias < 0) {
+      prazo = dias == -1 ? 'Expirou ontem' : 'Expirou há ${-dias} dias';
+    } else if (dias == 0) {
       prazo = 'Expira hoje';
     } else if (dias == 1) {
       prazo = 'Expira amanhã';
@@ -230,14 +234,16 @@ class _DetalheAlimentoState extends State<DetalheAlimento> {
                     textBaseline: TextBaseline.alphabetic,
                     children: [
                       Text(
-                        dias <= 0
+                        dias < 0
+                            ? 'Expirou'
+                            : dias == 0
                             ? 'Hoje'
                             : (dias == 1 ? '1 dia' : '$dias dias'),
                         style: branco(textTheme.displayLarge),
                       ),
                       const SizedBox(width: AppSpacing.small),
                       Text(
-                        'até ${_data(item.validade)}',
+                        '${dias < 0 ? 'a' : 'até'} ${_data(item.validade)}',
                         style: branco(textTheme.bodyMedium),
                       ),
                     ],

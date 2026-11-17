@@ -162,7 +162,7 @@ class Frigorifico extends ChangeNotifier {
       item.motivoSaida = 'consumido';
     }
     _guardar(item);
-    eventos.add(
+    _registar(
       Evento(
         itemId: item.id,
         nome: item.nome,
@@ -177,7 +177,7 @@ class Frigorifico extends ChangeNotifier {
   void usarTudo(Item item) => usar(item, quantidade: item.quantidade);
 
   void deitarFora(Item item, {String? motivo}) {
-    eventos.add(
+    _registar(
       Evento(
         itemId: item.id,
         nome: item.nome,
@@ -204,8 +204,35 @@ class Frigorifico extends ChangeNotifier {
     item.motivoSaida = null;
     _guardar(item);
     final int i = eventos.lastIndexWhere((e) => e.itemId == item.id);
-    if (i != -1) eventos.removeAt(i);
+    if (i != -1) _anular(eventos.removeAt(i));
     notifyListeners();
+  }
+
+  // ? Junta o evento à lista (o Impacto muda já) e grava-o na tabela
+  // ? historico por trás, sem await, como o _guardar dos itens
+  void _registar(Evento e) {
+    eventos.add(e);
+    if (!naNuvem) return;
+    supabase
+        .from('historico')
+        .insert(linhaDoEvento(e))
+        .then((_) {}, onError: (Object erro) => _erro(erro));
+  }
+
+  // ? Anular: apaga a linha do historico. Procuro-a pelo nome e pela hora
+  // ? exata (com microssegundos), que é a app que envia no _registar, por
+  // ? isso não preciso de esperar pelo id que o Supabase dá.
+  // ! Se carregarem Anular antes de o insert chegar ao Supabase (menos de
+  // ! 1 s), o delete não encontra nada e a linha fica. Aceitei isto para o
+  // ! código ficar simples.
+  void _anular(Evento e) {
+    if (!naNuvem) return;
+    supabase
+        .from('historico')
+        .delete()
+        .eq('nome', e.nome)
+        .eq('criado_em', e.data.toUtc().toIso8601String())
+        .then((_) {}, onError: (Object erro) => _erro(erro));
   }
 
   // ? Chamado pelo ecrã Adicionar. Future porque espera pelo Supabase para
@@ -262,14 +289,25 @@ class Frigorifico extends ChangeNotifier {
 
   // ? Botão "Cozinhei" das Receitas: tira do inventário o que a receita usa.
   // ? Ordena por dias para gastar primeiro o que expira mais cedo (ODS 12.3)
+  // ? Gasta de vários itens se for preciso: 2 iogurtes da receita podem
+  // ? estar em 2 itens com 1 cada (antes só gastava do primeiro)
   void cozinhar(Receita r, int pessoas) {
     for (final ing in r.ingredientes) {
       if (ing.despensa) continue;
       final candidatos =
-          noFrigorifico.where((i) => ingredienteCorresponde(ing, i)).toList()
+          noFrigorifico
+              .where((i) => i.quantidade > 0 && ingredienteCorresponde(ing, i))
+              .toList()
             ..sort((a, b) => a.dias.compareTo(b.dias));
-      if (candidatos.isEmpty) continue;
-      usar(candidatos.first, quantidade: ing.necessario(pessoas).round());
+      int falta = ing.necessario(pessoas).round();
+      for (final item in candidatos) {
+        if (falta <= 0) break;
+        // ? usar() já corta no que há, por isso guardo o antes para saber
+        // ? quanto saiu mesmo deste item
+        final int antes = item.quantidade;
+        usar(item, quantidade: falta);
+        falta -= antes - item.quantidade;
+      }
     }
   }
 
@@ -363,21 +401,21 @@ class Frigorifico extends ChangeNotifier {
 
   // ? Leituras de [horas] para trás até agora, uma a cada [passo] minutos.
   // ? Usado pelo gráfico do Histórico da temperatura
-  List<(DateTime, double)> leituras(int horas, int passo) {
+  List<Leitura> leituras(int horas, int passo) {
     final reais = _resumos['$horas/$passo'];
     if (temLeiturasReais && reais != null && reais.isNotEmpty) {
       // ? médias do Supabase + o valor de agora no fim, para a linha do
       // ? gráfico acabar no mesmo número que aparece no cartão
-      return [...reais, (DateTime.now(), temperatura)];
+      return [...reais, Leitura(DateTime.now(), temperatura)];
     }
     final agora = DateTime.now();
-    final lista = <(DateTime, double)>[];
+    final lista = <Leitura>[];
     for (int m = horas * 60; m > 0; m -= passo) {
       final t = agora.subtract(Duration(minutes: m));
-      lista.add((t, temperaturaEm(t)));
+      lista.add(Leitura(t, temperaturaEm(t)));
     }
     // ? a última é o valor de agora (igual ao cartão do Início)
-    lista.add((agora, temperatura));
+    lista.add(Leitura(agora, temperatura));
     return lista;
   }
 
@@ -413,7 +451,7 @@ class Frigorifico extends ChangeNotifier {
   bool verBoasVindas = false;
   // ? médias do gráfico guardadas por "horas/passo" ('24/30', '168/60')
   // ? para não as pedir outra vez ao trocar entre 24 h e 7 dias
-  final Map<String, List<(DateTime, double)>> _resumos = {};
+  final Map<String, List<Leitura>> _resumos = {};
   RealtimeChannel? _canal;
 
   // ? Um só sítio para os erros: guarda o último (as Definições mostram-no)
@@ -481,6 +519,7 @@ class Frigorifico extends ChangeNotifier {
       await _carregarReceitas();
       await _carregarValidades();
       await _carregarCompras();
+      await _carregarHistorico();
       await _carregarSensores();
       _ouvir();
       erroNuvem = null;
@@ -533,34 +572,62 @@ class Frigorifico extends ChangeNotifier {
     }
   }
 
-  // ? Última leitura + médias do gráfico + eventos da porta da última semana
+  // ? Histórico do Impacto desde 1 de janeiro do ano passado (o Impacto
+  // ? compara com o mês e o ano anteriores; mais para trás não se usa)
+  Future<void> _carregarHistorico() async {
+    try {
+      final desde = DateTime(DateTime.now().year - 1).toUtc();
+      final linhas = await supabase
+          .from('historico')
+          .select()
+          .gte('criado_em', desde.toIso8601String())
+          .order('criado_em');
+      // ? troca os exemplos pelos dados reais (mesmo que venha vazio: assim o
+      // ? Impacto mostra "sem dados" em vez de números inventados)
+      eventos
+        ..clear()
+        ..addAll(linhas.map(eventoDaLinha));
+    } catch (e) {
+      // ? sem a tabela (SQL ainda não corrido): ficam os exemplos
+      _erro(e);
+    }
+  }
+
+  // ? Última leitura + médias do gráfico + eventos da porta da última semana.
+  // ! try próprio (como as outras): se falhar, o carregar() continua e liga
+  // ! o Realtime na mesma (antes saltava o _ouvir() e a app deixava de se
+  // ! atualizar sozinha)
   Future<void> _carregarSensores() async {
-    final ultima = await supabase
-        .from('leituras')
-        .select()
-        .order('medido_em', ascending: false)
-        .limit(1)
-        .maybeSingle();
-    // ? sem leituras (placa ainda não ligada): ficam os sensores falsos
-    // ? para os ecrãs terem o que mostrar
-    if (ultima == null) return;
-    temLeiturasReais = true;
-    _aplicarLeitura(ultima);
+    try {
+      final ultima = await supabase
+          .from('leituras')
+          .select()
+          .order('medido_em', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      // ? sem leituras (placa ainda não ligada): ficam os sensores falsos
+      // ? para os ecrãs terem o que mostrar
+      if (ultima == null) return;
+      temLeiturasReais = true;
+      _aplicarLeitura(ultima);
 
-    await carregarLeituras(24, 30);
-    await carregarLeituras(24 * 7, 60);
+      await carregarLeituras(24, 30);
+      await carregarLeituras(24 * 7, 60);
 
-    final semana = DateTime.now().subtract(const Duration(days: 7)).toUtc();
-    final evs = await supabase
-        .from('eventos')
-        .select()
-        .gte('ocorreu_em', semana.toIso8601String())
-        .order('ocorreu_em');
-    aberturas.clear();
-    alertas.clear();
-    portaAbertaDesde = null;
-    for (final e in evs) {
-      _aplicarEvento(e);
+      final semana = DateTime.now().subtract(const Duration(days: 7)).toUtc();
+      final evs = await supabase
+          .from('eventos')
+          .select()
+          .gte('ocorreu_em', semana.toIso8601String())
+          .order('ocorreu_em');
+      aberturas.clear();
+      alertas.clear();
+      portaAbertaDesde = null;
+      for (final e in evs) {
+        _aplicarEvento(e);
+      }
+    } catch (e) {
+      _erro(e);
     }
   }
 
@@ -576,7 +643,7 @@ class Frigorifico extends ChangeNotifier {
       );
       _resumos['$horas/$passo'] = [
         for (final l in r as List)
-          (
+          Leitura(
             DateTime.parse(l['momento'] as String).toLocal(),
             (l['temperatura'] as num).toDouble(),
           ),
@@ -612,11 +679,11 @@ class Frigorifico extends ChangeNotifier {
     final dia = _resumos['24/30'] ?? [];
     final perto = dia.where(
       (l) =>
-          !l.$1.isBefore(inicio.subtract(const Duration(minutes: 30))) &&
-          l.$1.isBefore(inicio.add(const Duration(hours: 1))),
+          !l.hora.isBefore(inicio.subtract(const Duration(minutes: 30))) &&
+          l.hora.isBefore(inicio.add(const Duration(hours: 1))),
     );
     if (perto.isNotEmpty) {
-      maxT = perto.map((l) => l.$2).reduce((a, b) => a > b ? a : b);
+      maxT = perto.map((l) => l.temperatura).reduce((a, b) => a > b ? a : b);
     }
     aberturas.add(AberturaPorta(inicio: inicio, duracao: dur, maxTemp: maxT));
     if (dur.inSeconds > 60) {
@@ -761,6 +828,9 @@ class Frigorifico extends ChangeNotifier {
     compras
       ..clear()
       ..addAll(_comprasExemplo());
+    eventos
+      ..clear()
+      ..addAll(_eventosExemplo());
     nomeUtilizador = '';
     eAdmin = false;
     notifyListeners();

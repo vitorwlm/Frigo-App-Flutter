@@ -178,13 +178,20 @@ class LigarFrigorifico extends StatefulWidget {
   State<LigarFrigorifico> createState() => _LigarFrigorificoState();
 }
 
+// ? Uma rede Wi-Fi da lista: o nome e o texto do sinal
+class _Rede {
+  const _Rede(this.nome, this.sinal);
+
+  final String nome;
+  final String sinal;
+}
+
 class _LigarFrigorificoState extends State<LigarFrigorifico> {
   // ? redes falsas por agora; mais tarde vêm da placa (ESP32) por Bluetooth
-  final List<(String, String)> _redes = [
-    ('MEO-5G-Casa', 'Sinal forte'),
-    ('Vodafone-2F1A', 'Sinal médio'),
+  final List<_Rede> _redes = [
+    const _Rede('MEO-5G-Casa', 'Sinal forte'),
+    const _Rede('Vodafone-2F1A', 'Sinal médio'),
   ];
-  // ? ↑ (String, String) = "record": dois valores juntos, lidos com .$1 e .$2
 
   String _rede = 'MEO-5G-Casa';
   final _palavraPasse = TextEditingController();
@@ -221,7 +228,7 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
     );
     if (nome != null && nome.isNotEmpty) {
       setState(() {
-        _redes.add((nome, 'Escrita à mão'));
+        _redes.add(_Rede(nome, 'Escrita à mão'));
         _rede = nome;
       });
     }
@@ -319,12 +326,12 @@ class _LigarFrigorificoState extends State<LigarFrigorifico> {
                     children: [
                       for (final r in _redes)
                         ItemRow(
-                          titulo: r.$1,
-                          detalhe: r.$2,
-                          onTap: () => setState(() => _rede = r.$1),
+                          titulo: r.nome,
+                          detalhe: r.sinal,
+                          onTap: () => setState(() => _rede = r.nome),
                           trailing: MarcarCirculo(
-                            marcado: r.$1 == _rede,
-                            onPressed: () => setState(() => _rede = r.$1),
+                            marcado: r.nome == _rede,
+                            onPressed: () => setState(() => _rede = r.nome),
                           ),
                         ),
                       ItemRow(

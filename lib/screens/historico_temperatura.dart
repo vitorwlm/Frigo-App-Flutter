@@ -59,13 +59,13 @@ class _HistoricoTemperaturaState extends State<HistoricoTemperatura> {
     // ? 24 h: de 30 em 30 min · 7 dias: de hora a hora (pontos suficientes
     // ? para a linha, sem encher o gráfico)
     final leituras = dia ? f.leituras(24, 30) : f.leituras(24 * 7, 60);
-    final valores = [for (final l in leituras) l.$2];
+    final valores = [for (final l in leituras) l.temperatura];
     final double minimo = valores.reduce((a, b) => a < b ? a : b);
     final double maximo = valores.reduce((a, b) => a > b ? a : b);
     // ? fold = soma tudo a começar em 0
     final double media = valores.fold(0.0, (s, v) => s + v) / valores.length;
 
-    final DateTime desde = leituras.first.$1;
+    final DateTime desde = leituras.first.hora;
     // ? só as aberturas dentro do período do gráfico, mais recentes primeiro
     final aberturas =
         f.aberturas.where((a) => !a.inicio.isBefore(desde)).toList()
