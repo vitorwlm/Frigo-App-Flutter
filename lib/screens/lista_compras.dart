@@ -187,6 +187,8 @@ class ListaCompras extends StatelessWidget {
                   ),
                 )
               else
+                //? collection if: só inclui o conteúdo se a condição for verdadeira, por isso não precisas de operador ternário com null.
+                //? ...[ ] é o spread: “despeja” os elementos da lista dentro da lista exterior. Serve para meteres vários widgets (por exemplo, um título e um ListCard) debaixo do mesmo if.
                 ListCard(children: [for (final c in porComprar) _linha(c)]),
               if (noCarrinho.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.mid),

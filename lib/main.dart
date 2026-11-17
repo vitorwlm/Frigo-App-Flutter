@@ -11,7 +11,6 @@
 // *              → BoasVindas (só depois de criar conta) ou HomeShell
 // * HomeShell = barra de baixo com os 5 separadores:
 // *   Início · Inventário · Receitas · Impacto · Compras
-//TODO REVER A PARTIR DE /SCREENS/GALERIA
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -38,8 +37,6 @@ Future<void> main() async {
   // ? ícones da barra de estado escuros, porque o fundo da app é claro
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
   await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
-  // ? antecedência e resumo diário guardados no telemóvel
-  await frigorifico.carregarDefinicoes();
   runApp(const MyApp());
 }
 
@@ -134,7 +131,6 @@ class HomeShell extends StatefulWidget {
 }
 
 // ? _ no nome = privado a este ficheiro (ninguém de fora precisa do estado)
-//TODO ver entao pq por _ vs por sem se for indiferente
 class _HomeShellState extends State<HomeShell> {
   int _indice = 0;
 
