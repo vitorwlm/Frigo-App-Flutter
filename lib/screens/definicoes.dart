@@ -197,15 +197,28 @@ class Definicoes extends StatelessWidget {
                         ],
                       ),
                     ),
-                    ItemRow(
-                      titulo: 'Pôr alimentos de exemplo',
-                      detalhe: 'Envia os alimentos de teste para o Supabase',
-                      trailing: seta,
-                      onTap: () async {
-                        final msg = await frigorifico.enviarExemplos();
-                        if (context.mounted) mostrarMensagem(context, msg);
-                      },
-                    ),
+                    // ! só o admin: mexem nos dados de todas as contas (e o
+                    // ! Supabase confirma outra vez dentro das funções SQL)
+                    if (frigorifico.eAdmin) ...[
+                      ItemRow(
+                        titulo: 'Pôr dados falsos',
+                        detalhe:
+                            'Alimentos, Impacto, compras e 7 dias de '
+                            'temperatura no Supabase',
+                        trailing: seta,
+                        onTap: () async {
+                          final msg = await frigorifico.porDadosFalsos();
+                          if (context.mounted) mostrarMensagem(context, msg);
+                        },
+                      ),
+                      ItemRow(
+                        titulo: 'Apagar todos os dados',
+                        detalhe:
+                            'Ficam só as contas, as receitas e as validades',
+                        corTitulo: AppTokens.textDanger,
+                        onTap: () => _apagarDados(context),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: AppSpacing.midsmall),
@@ -329,6 +342,38 @@ class Definicoes extends StatelessWidget {
         );
       },
     );
+  }
+
+  // ? Apagar não se desfaz: pergunta primeiro e diz o que vai e o que fica
+  Future<void> _apagarDados(BuildContext context) async {
+    final bool? sim = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Apagar todos os dados?'),
+        content: const Text(
+          'Apaga do Supabase os alimentos, o histórico do Impacto, a lista '
+          'de compras, as fotos, as leituras e as aberturas da porta, para '
+          'todas as contas.\n\nFicam as contas, as receitas e as validades. '
+          'Não dá para desfazer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Apagar',
+              style: TextStyle(color: AppTokens.textDanger),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (sim != true) return;
+    final msg = await frigorifico.apagarDados();
+    if (context.mounted) mostrarMensagem(context, msg);
   }
 
   Future<void> _terminarSessao(BuildContext context) async {

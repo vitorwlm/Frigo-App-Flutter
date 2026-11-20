@@ -19,6 +19,7 @@ import 'config/secrets.dart';
 import 'data/frigorifico.dart';
 import 'services/nuvem.dart';
 import 'theme/app_theme.dart';
+import 'widgets/estados.dart';
 import 'screens/adicionar_sheet.dart';
 import 'screens/homepage.dart';
 import 'screens/impacto.dart';
@@ -98,10 +99,10 @@ class _ArranqueState extends State<_Arranque> {
     return FutureBuilder<void>(
       future: _carregar,
       builder: (context, snap) {
+        // ? enquanto carrega mostra a forma do Início (esqueleto) em vez
+        // ? de uma rodinha sozinha
         if (snap.connectionState != ConnectionState.done) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          return const EsqueletoInicio();
         }
         // ? ListenableBuilder porque o frigorifico avisa quando verBoasVindas
         // ? muda: depois de criar conta mostra as Boas-vindas, no fim passa à app

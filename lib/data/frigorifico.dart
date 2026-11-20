@@ -795,21 +795,57 @@ class Frigorifico extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ? Põe os alimentos de exemplo no Supabase (Demonstração nas Definições),
-  // ? para testar e apresentar a app sem ter de adicionar tudo à mão
-  Future<String> enviarExemplos() async {
+  // * ---- Demonstração (Definições, só o admin) ----
+  // * As duas chamam uma função SQL (dados_demo.sql) porque a app não tem
+  // * permissão para apagar itens nem para escrever leituras da placa.
+  // * Devolvem a mensagem para a snackbar.
+
+  // ? Inventário, histórico do Impacto, compras, 7 dias de temperatura e
+  // ? aberturas da porta, tudo de uma vez
+  Future<String> porDadosFalsos() async {
     if (!naNuvem) return 'Entra primeiro na tua conta.';
     try {
-      await supabase.from('itens').insert([
-        for (final i in _alimentosDemo())
-          {...linhaDoItem(i), 'origem': 'manual'},
-      ]);
+      await supabase.rpc('por_dados_falsos');
       await carregar();
-      return 'Alimentos de exemplo adicionados';
+      return 'Dados falsos adicionados';
     } catch (e) {
       _erro(e);
       return 'Erro: ${erroEmPortugues(e)}';
     }
+  }
+
+  // ! Apaga itens, histórico, fotos, compras, leituras e eventos de TODAS as
+  // ! contas (o frigorífico é partilhado). Ficam as contas, as receitas, as
+  // ! validades e a temperatura-alvo. O ecrã pede confirmação antes.
+  Future<String> apagarDados() async {
+    if (!naNuvem) return 'Entra primeiro na tua conta.';
+    try {
+      await supabase.rpc('apagar_dados');
+      // ? sem leituras, o carregar() não mexe nos sensores: volto eu aos
+      // ? falsos, senão ficava a última temperatura real no ecrã
+      _sensoresDeExemplo();
+      await carregar();
+      return 'Dados apagados';
+    } catch (e) {
+      _erro(e);
+      return 'Erro: ${erroEmPortugues(e)}';
+    }
+  }
+
+  void _sensoresDeExemplo() {
+    temLeiturasReais = false;
+    _resumos.clear();
+    temperatura = 4.2;
+    humidade = 62;
+    ligado = true;
+    portaAbertaDesde = null;
+    ultimaLeitura = DateTime.now().subtract(const Duration(minutes: 2));
+    aberturas
+      ..clear()
+      ..addAll(_aberturasExemplo());
+    alertas
+      ..clear()
+      ..addAll(_alertasExemplo());
   }
 
   // ? Botão Sair das Definições. Depois do signOut, o _PortaoLogin do
@@ -1076,94 +1112,6 @@ bool ingredienteCorresponde(Ingrediente ing, Item item) {
 // ? Uma só instância para a app toda: todos os ecrãs importam este
 // ? "frigorifico" e veem os mesmos dados
 final Frigorifico frigorifico = Frigorifico();
-
-// ? Alimentos do botão "Pôr alimentos de exemplo" (Demonstração nas Definições).
-// ? Função (e não const) porque as validades dependem do dia de hoje.
-List<Item> _alimentosDemo() {
-  final hoje = DateUtils.dateOnly(DateTime.now());
-  DateTime daqui(int dias) => hoje.add(Duration(days: dias));
-  return [
-    Item(
-      id: '0',
-      nome: 'Iogurte natural',
-      quantidade: 2,
-      unidade: 'unidades',
-      validade: daqui(0),
-      entrada: hoje,
-      aberto: true,
-      categoria: 'Laticínios',
-      prateleira: 'Prateleira de cima',
-    ),
-    Item(
-      id: '0',
-      nome: 'Ovos',
-      quantidade: 6,
-      unidade: 'unidades',
-      validade: daqui(1),
-      entrada: hoje,
-      categoria: 'Ovos',
-    ),
-    Item(
-      id: '0',
-      nome: 'Sobras de arroz',
-      quantidade: 1,
-      unidade: 'caixa',
-      validade: daqui(2),
-      entrada: hoje,
-      categoria: 'Sobras',
-    ),
-    Item(
-      id: '0',
-      nome: 'Espinafres',
-      quantidade: 200,
-      unidade: 'g',
-      validade: daqui(4),
-      entrada: hoje,
-      categoria: 'Legumes',
-      prateleira: 'Gaveta',
-    ),
-    Item(
-      id: '0',
-      nome: 'Queijo fresco',
-      quantidade: 1,
-      unidade: 'unidades',
-      validade: daqui(6),
-      entrada: hoje,
-      categoria: 'Laticínios',
-    ),
-    Item(
-      id: '0',
-      nome: 'Leite meio-gordo',
-      quantidade: 1,
-      unidade: 'L',
-      validade: daqui(9),
-      entrada: hoje,
-      aberto: true,
-      categoria: 'Laticínios',
-      prateleira: 'Porta',
-    ),
-    Item(
-      id: '0',
-      nome: 'Fiambre',
-      quantidade: 150,
-      unidade: 'g',
-      validade: daqui(5),
-      entrada: hoje,
-      categoria: 'Carne e peixe',
-    ),
-    Item(
-      id: '0',
-      nome: 'Iogurte grego',
-      quantidade: 1,
-      unidade: 'unidades',
-      validade: daqui(12),
-      entrada: hoje,
-      categoria: 'Laticínios',
-      prateleira: 'Prateleira de cima',
-      certeza: 54,
-    ),
-  ];
-}
 
 // ? Lista de compras de exemplo (antes de entrar na conta ou se a tabela
 // ? compras ainda não existir)

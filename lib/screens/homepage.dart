@@ -14,6 +14,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/circle_icon_button.dart';
 import '../widgets/hero_card.dart';
+import '../widgets/estados.dart';
 import '../widgets/item_row.dart';
 import '../widgets/list_card.dart';
 import '../widgets/recipe_card.dart';
@@ -229,43 +230,55 @@ class Homepage extends StatelessWidget {
                   }
                 },
               ),
-              const SizedBox(height: AppSpacing.mid),
-              SectionTitle(titulo: 'A expirar', contador: aExpirar.length),
-              const SizedBox(height: AppSpacing.small),
-              if (aExpirar.isEmpty)
-                AppCard(
-                  child: Text(
-                    'Nada a expirar nos próximos 4 dias.',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: AppTokens.textSecondary,
-                    ),
-                  ),
-                )
-              else
-                ListCard(
-                  children: [
-                    for (final item in aExpirar) _linha(context, item),
-                  ],
+              // ? frigorífico vazio (ecrã 26): uma mensagem a meio em vez das
+              // ? secções A expirar e Cozinha isto hoje, que ficavam vazias
+              if (frigorifico.totalEmCasa == 0) ...[
+                const SizedBox(height: AppSpacing.large * 2),
+                const EstadoVazio(
+                  titulo: 'O frigorífico está vazio!',
+                  texto:
+                      'Adiciona o que compraste ao frigorífico!\n'
+                      'O frigo diz-te o que está a expirar',
                 ),
-              // ? sem receitas na base de dados não mostra a secção; com a
-              // ? temperatura alta também não, para o foco ficar no problema
-              if (receita != null &&
-                  frigorifico.estado != EstadoFrigu.temperaturaAlta) ...[
+              ] else ...[
                 const SizedBox(height: AppSpacing.mid),
-                const SectionTitle(titulo: 'Cozinha isto hoje'),
+                SectionTitle(titulo: 'A expirar', contador: aExpirar.length),
                 const SizedBox(height: AppSpacing.small),
-                RecipeCard(
-                  titulo: receita.titulo,
-                  descricao: receita.descricao,
-                  estado: receita.estado(receita.pessoasBase),
-                  minutos: receita.minutos,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ReceitaDetalhe(receita: receita),
+                if (aExpirar.isEmpty)
+                  AppCard(
+                    child: Text(
+                      'Nada a expirar nos próximos 4 dias.',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: AppTokens.textSecondary,
+                      ),
+                    ),
+                  )
+                else
+                  ListCard(
+                    children: [
+                      for (final item in aExpirar) _linha(context, item),
+                    ],
+                  ),
+                // ? sem receitas na base de dados não mostra a secção; com a
+                // ? temperatura alta também não, para o foco ficar no problema
+                if (receita != null &&
+                    frigorifico.estado != EstadoFrigu.temperaturaAlta) ...[
+                  const SizedBox(height: AppSpacing.mid),
+                  const SectionTitle(titulo: 'Cozinha isto hoje'),
+                  const SizedBox(height: AppSpacing.small),
+                  RecipeCard(
+                    titulo: receita.titulo,
+                    descricao: receita.descricao,
+                    estado: receita.estado(receita.pessoasBase),
+                    minutos: receita.minutos,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReceitaDetalhe(receita: receita),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ],
           ),

@@ -14,6 +14,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/circle_icon_button.dart';
+import '../widgets/estados.dart';
 import '../widgets/item_row.dart';
 import '../widgets/list_card.dart';
 import '../widgets/screen_header.dart';
@@ -251,7 +252,19 @@ class _InventarioState extends State<Inventario> {
             const SizedBox(height: AppSpacing.small),
             // ? Expanded para só a lista fazer scroll; a pesquisa fica fixa
             Expanded(
-              child: lista.isEmpty
+              // ? frigorífico vazio (ecrã 05) é diferente de "os filtros não
+              // ? deixaram nada": aí basta dizer que não há resultados
+              child:
+                  _local == Local.frigorifico && _contar(Local.frigorifico) == 0
+                  ? const Center(
+                      child: EstadoVazio(
+                        titulo: 'O frigorífico está vazio!',
+                        texto:
+                            'Adiciona o que compraste ao frigorífico!\n'
+                            'O frigo diz-te o que está a expirar',
+                      ),
+                    )
+                  : lista.isEmpty
                   ? Center(
                       child: Text(
                         'Nada por aqui',

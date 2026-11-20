@@ -228,6 +228,11 @@ String chaveNova(String nome) {
 // ? O Supabase Auth só dá erros em inglês: traduzo os que o utilizador pode
 // ? ver no Login; os outros aparecem tal como vêm
 String erroEmPortugues(Object e) {
+  // ? PGRST202 = a função SQL (rpc) não existe no Supabase: falta correr o
+  // ? ficheiro .sql que a cria (ex.: dados_demo.sql)
+  if (e is PostgrestException && e.code == 'PGRST202') {
+    return 'Falta criar esta função no Supabase (corre o ficheiro .sql no SQL Editor).';
+  }
   final String msg = e is AuthException ? e.message : e.toString();
   final m = msg.toLowerCase();
   if (m.contains('invalid login')) return 'Email ou palavra-passe errados.';

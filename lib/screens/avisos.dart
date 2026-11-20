@@ -14,6 +14,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/circle_icon_button.dart';
+import '../widgets/estados.dart';
 import '../widgets/item_row.dart';
 import '../widgets/list_card.dart';
 import '../widgets/screen_header.dart';
@@ -239,39 +240,46 @@ class Avisos extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.midsmall),
-                const SectionTitle(titulo: 'A expirar'),
-                const SizedBox(height: AppSpacing.midsmall),
-                if (alimentos.isEmpty)
-                  Text(
-                    'Nada a expirar nos próximos $dias dias.',
-                    style: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(color: AppTokens.textSecondary),
-                  )
-                else
-                  ListCard(
-                    children: [
-                      for (final item in alimentos)
-                        _linhaAlimento(context, item),
-                    ],
-                  ),
-                if (recentes.isNotEmpty) ...[
+                // ? sem nada a expirar nem nada recente (ecrã 04): só a
+                // ? mensagem, em vez de duas secções vazias
+                if (alimentos.isEmpty && recentes.isEmpty) ...[
+                  const SizedBox(height: AppSpacing.large * 3),
+                  const EstadoVazio(titulo: 'Não há avisos\nde momento!'),
+                ] else ...[
                   const SizedBox(height: AppSpacing.midsmall),
-                  const SectionTitle(titulo: 'Recentes'),
+                  const SectionTitle(titulo: 'A expirar'),
                   const SizedBox(height: AppSpacing.midsmall),
-                  ListCard(
-                    children: [
-                      for (final r in recentes)
-                        ItemRow(
-                          titulo: r.titulo,
-                          detalhe: r.detalhe,
-                          estado: r.estado,
-                          trailing: r.chip == null
-                              ? null
-                              : TagChip(texto: r.chip!, tom: TagTom.marca),
-                        ),
-                    ],
-                  ),
+                  if (alimentos.isEmpty)
+                    Text(
+                      'Nada a expirar nos próximos $dias dias.',
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(color: AppTokens.textSecondary),
+                    )
+                  else
+                    ListCard(
+                      children: [
+                        for (final item in alimentos)
+                          _linhaAlimento(context, item),
+                      ],
+                    ),
+                  if (recentes.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.midsmall),
+                    const SectionTitle(titulo: 'Recentes'),
+                    const SizedBox(height: AppSpacing.midsmall),
+                    ListCard(
+                      children: [
+                        for (final r in recentes)
+                          ItemRow(
+                            titulo: r.titulo,
+                            detalhe: r.detalhe,
+                            estado: r.estado,
+                            trailing: r.chip == null
+                                ? null
+                                : TagChip(texto: r.chip!, tom: TagTom.marca),
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ],
             );
